@@ -78,4 +78,24 @@ function sendPasswordResetEmail(to, link) {
   });
 }
 
-module.exports = { sendMail, sendVerificationEmail, sendPasswordResetEmail };
+function sendBirthdayDigest(to, items) {
+  var rows = items.map(function (it) {
+    return '<tr><td style="padding:6px 0;font-size:15px;color:#18306C"><b>' + it.name + '</b> <span style="color:#8A93AB">\u00b7 ' + it.club + '</span></td>' +
+      '<td style="padding:6px 0;font-size:14px;color:#3A4566;text-align:right">' + it.when + '</td></tr>';
+  }).join('');
+  return sendMail({
+    to: to,
+    subject: 'Birthdays coming up on ParentRecall',
+    text: 'Birthdays coming up:\n' + items.map(function (it) { return '- ' + it.name + ' (' + it.club + ') ' + it.when; }).join('\n'),
+    html: '<!doctype html><html><body style="margin:0;background:#F4F6FB;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">' +
+      '<div style="max-width:480px;margin:0 auto;padding:32px 20px">' +
+      '<div style="text-align:center;margin-bottom:20px"><span style="font-family:Georgia,serif;font-weight:800;font-size:24px;color:#18306C">Parent<span style="color:#F2641E">Recall</span></span></div>' +
+      '<div style="background:#fff;border:1px solid #E7EBF3;border-radius:18px;padding:24px">' +
+      '<h1 style="font-size:19px;color:#18306C;margin:0 0 14px">Birthdays this week \uD83C\uDF82</h1>' +
+      '<table style="width:100%;border-collapse:collapse">' + rows + '</table>' +
+      '<p style="font-size:12.5px;color:#8A93AB;margin:18px 0 0">A little nudge so you can say happy birthday at the gate.</p>' +
+      '</div></div></body></html>',
+  });
+}
+
+module.exports = { sendMail, sendVerificationEmail, sendPasswordResetEmail, sendBirthdayDigest };

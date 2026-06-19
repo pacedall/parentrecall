@@ -123,6 +123,7 @@ All data routes require `Authorization: Bearer <token>`.
 | POST   | `/api/people`              | `{ clubId, name, role?, parents?, hooks?, birthday? }` |
 | POST   | `/api/people/bulk`         | `{ clubId, names: [ ... ] }` (paste a class list) |
 | POST   | `/api/people/import`       | `{ clubId, people: [ {name, role?, ...} ] }` (spreadsheet import) |
+| GET    | `/api/people/search?q=`    | find a person across all of the user's clubs     |
 | PUT    | `/api/people/:id`          | partial of the above                             |
 | DELETE | `/api/people/:id`          | —                                                |
 
@@ -146,28 +147,49 @@ Relevant env vars: `RESEND_API_KEY`, `MAIL_FROM`, `APP_URL`, `REQUIRE_VERIFIED_E
 ## Privacy & safeguarding notes
 
 - Data is private per account — there is no sharing, no social graph, no discovery.
-- In-app avatars are neutral silhouettes by design. **Don't** add real photos of other people's children.
-- `birthday` is stored as free text (e.g. "12 March") to keep entry effortless.
+- **No photo uploads, ever** — by design there is no image upload anywhere; faces are generated cartoon avatars only, so a real photo of someone else's child can never be stored.
+- **Surnames are clamped to 2 letters** on the server ("John Smith" → "John Sm", "Mary Jane Watson" → "Mary Ja Wa") — data minimisation for third parties, enforced at write time so it's true at rest.
+- `birthday` keeps the free-text you type for display, and is also parsed into month/day for reminders.
 - Passwords are hashed with bcrypt (cost 12); JWTs expire after 60 days.
 
 ## Installable (PWA)
 
-Ships with a web app manifest, icons, and a service worker, so it can be added to a phone's home screen and opens instantly. The service worker caches the app shell for offline launch; API requests are never cached (always fresh, always private). True offline *data* (reading your lists with no signal) is a future addition.
+Web app manifest, icons, and a service worker. The app shell is cache-first (instant launch); API GETs are network-first with a cache fallback, so your lists are **readable offline** with the last-seen data. API writes are never cached.
+
+## Birthday reminders
+
+A daily in-process job (`src/scheduler.js`) emails each user a digest of birthdays in the next 7 days, de-duplicated to once per user per day via `reminder_log`. Controlled by `REMINDERS_ENABLED` (default true). Good for a single instance; for multiple instances or precise send-time, move it to a dedicated cron/worker.
+
+## Family accounts (admin + associate)
+
+A household can have **two people** with asymmetric roles:
+
+- **Admin** (the primary email): full control — add/edit/delete children, clubs and people; invite or remove the partner; export; delete the account.
+- **Associate** (the partner): their own sign-in over the **same** family data. Can add/edit/delete people, edit hooks/avatars/birthdays, and add/edit clubs — the daily job. Cannot delete a child or a whole club, remove the partner, export, or delete the account.
+
+How it works: the admin opens Account → "Invite my partner" and enters an email; the partner gets a set-password link and joins as the one associate (no open invites). Data is owned by the **household**, not a user, so removing the partner (or the partner leaving) reassigns what they added to the admin and **never deletes shared data**. Deleting the account is admin-only and removes the whole household and both member logins.
+
+Existing single-user accounts are migrated automatically on boot into their own one-person admin household (idempotent backfill), so nothing breaks for current users.
 
 ## Roadmap ideas (not built yet)
 
-- Birthday reminders (needs a scheduled email worker).
-- Offline data cache (read your lists with no signal).
-- A reset doesn't revoke existing JWT sessions (they're stateless). Add a per-user token version if you want reset to force re-login everywhere.
+- Wider avatar hair-texture range (braids, locs).
+- A reset doesn't revoke existing JWT sessions (stateless). Add a per-user token version if you want reset to force re-login everywhere.
+- A dedicated invite email (currently the partner receives the standard set-password/reset email).
 
 ### Done
 
 - Email verification + password reset (Resend).
 - Edit & delete for children, clubs, and people.
-- "Paste a class list" bulk add.
-- Spreadsheet import (.xlsx/.csv) with a downloadable template, for class reps/organisers. Parsing happens in the browser (SheetJS, self-hosted at `public/vendor/xlsx.full.min.js` so the content-security-policy stays strict); only the parsed names are sent to the server.
+- Custom cartoon avatars (skin tone, hair style + colour, glasses, **hijab**, **hearing aids**) — inline SVG, stored as a tiny validated JSON config. No real photos ever.
+- **Find** — search across every club by name *or* a remembered detail ("red Audi"), for the standing-at-the-gate moment.
+- **Practise mode** — flashcards (face → name) with light spaced repetition; missed names resurface first. Practice state is stored on the device.
+- Guided "what jogs your memory" prompts, and **Save & add another** for fast multi-add.
+- "Paste a class list" bulk add + spreadsheet import (.xlsx/.csv) with a downloadable template.
+- **Print / save as PDF** — a one-page faces-and-names sheet for the fridge.
+- Birthday reminders (daily email digest).
 - Export-my-data + delete-my-account (GDPR-friendly).
-- Installable PWA with offline app-shell.
+- Installable PWA with offline shell **and offline data reads**.
 
 ---
 

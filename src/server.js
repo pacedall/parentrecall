@@ -47,7 +47,10 @@ async function start() {
     console.error('Could not apply schema on boot:', err.message);
     // Keep going — Railway may attach the DB a moment later; routes will surface errors clearly.
   }
-  app.listen(PORT, () => console.log(`ParentRecall running on :${PORT}`));
+  app.listen(PORT, () => {
+    console.log(`ParentRecall running on :${PORT}`);
+    try { require('./scheduler').start(); } catch (e) { console.error('scheduler failed to start', e.message); }
+  });
 }
 
 start();

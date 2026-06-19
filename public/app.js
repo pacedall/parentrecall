@@ -5,6 +5,7 @@
   var TOKEN_KEY = 'pr_token';
   var token = localStorage.getItem(TOKEN_KEY) || null;
   var me = null;
+  var household = { role: null, isAdmin: false, partner: null, adminEmail: null };
 
   var PAL = ['blue', 'teal', 'navy', 'amber', 'red', 'orange'];
   var RAW = { teal: '#0CA8A8', blue: '#1890B4', navy: '#284C9E', amber: '#F5B72E', red: '#E5403A', orange: '#F2641E' };
@@ -25,6 +26,69 @@
       '<svg viewBox="0 0 24 24" fill="' + c + '"><circle cx="12" cy="8.2" r="4.2"/>' +
       '<path d="M3.5 22c0-4.7 3.8-7.6 8.5-7.6s8.5 2.9 8.5 7.6z"/></svg></span>';
   }
+
+  /* ---------------- Avatars ---------------- */
+  var SKIN = ['#F8D5B5', '#F0C39C', '#E0A878', '#C68642', '#9C6B3F', '#6B4423'];
+  var HAIRCOL = ['#2B2520', '#5A3825', '#A65E2E', '#D7A94B', '#9AA0A6', '#7B5A3A'];
+  var HAIRSTYLE = ['none', 'short', 'curly', 'long', 'bun', 'afro', 'hijab'];
+  var HAIRLABEL = { none: 'Shaved', short: 'Short', curly: 'Curly', long: 'Long', bun: 'Bun', afro: 'Afro', hijab: 'Hijab' };
+  var GLASSES = ['none', 'round', 'square'];
+  var GLASSLABEL = { none: 'None', round: 'Round', square: 'Square' };
+  var ACC = ['none', 'hearingaid'];
+  var ACCLABEL = { none: 'None', hearingaid: 'Hearing aid' };
+
+  function hairBack(style, hc) {
+    if (style === 'hijab') return '<path d="M20,50 C18,18 82,18 80,50 C80,75 70,90 50,90 C30,90 20,75 20,50 Z" fill="' + hc + '"/>';
+    if (style === 'long') return '<path d="M24,48 C20,26 80,26 76,48 L77,82 C77,89 68,87 68,70 C68,58 63,52 50,52 C37,52 32,58 32,70 C32,87 23,89 23,82 Z" fill="' + hc + '"/>';
+    if (style === 'afro') return '<ellipse cx="50" cy="40" rx="31" ry="27" fill="' + hc + '"/>';
+    if (style === 'curly') {
+      return [[34, 33], [50, 28], [66, 33], [27, 47], [73, 47], [41, 29], [59, 29], [50, 40]]
+        .map(function (p) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="10.5" fill="' + hc + '"/>'; }).join('');
+    }
+    return '';
+  }
+  function hairFront(style, hc) {
+    var cap = '<path d="M24,52 C28,12 72,12 76,52 C70,40 60,36 50,36 C40,36 30,40 24,52 Z" fill="' + hc + '"/>';
+    if (style === 'short' || style === 'long') return cap;
+    if (style === 'bun') return cap + '<circle cx="50" cy="21" r="8.5" fill="' + hc + '"/><rect x="45" y="27" width="10" height="7" rx="3.5" fill="' + hc + '"/>';
+    return '';
+  }
+  function glassesSVG(kind) {
+    if (kind === 'round') return '<g fill="none" stroke="#2C2C34" stroke-width="2.3" stroke-linecap="round"><circle cx="42" cy="51" r="7"/><circle cx="58" cy="51" r="7"/><path d="M49,50 q1,-2.5 2,0"/><path d="M35,49 l-5,-1.5"/><path d="M65,49 l5,-1.5"/></g>';
+    if (kind === 'square') return '<g fill="none" stroke="#2C2C34" stroke-width="2.3" stroke-linecap="round"><rect x="35" y="45.5" width="13" height="11" rx="2.6"/><rect x="52" y="45.5" width="13" height="11" rx="2.6"/><path d="M48,50 q2,-2 4,0"/><path d="M35,49 l-5,-1.5"/><path d="M65,49 l5,-1.5"/></g>';
+    return '';
+  }
+  function accSVG(a, hair) {
+    if (a === 'hearingaid' && hair !== 'hijab') return '<path d="M75,46 q6,1 5,8 q-1,5 -6,3.5" fill="none" stroke="#9AA0A6" stroke-width="2.6" stroke-linecap="round"/><circle cx="76.5" cy="50" r="2.1" fill="#7C8590"/>';
+    return '';
+  }
+  function buildAvatar(cfg, size) {
+    cfg = cfg || {}; size = size || 48;
+    var skin = cfg.skin || SKIN[2], hc = cfg.hairColor || HAIRCOL[1], hair = cfg.hair || 'short', glasses = cfg.glasses || 'none', acc = cfg.acc || 'none';
+    var id = 'av' + Math.random().toString(36).slice(2, 8);
+    var ears = (hair === 'hijab') ? '' : '<circle cx="28" cy="52" r="4.5" fill="' + skin + '"/><circle cx="72" cy="52" r="4.5" fill="' + skin + '"/>';
+    var inner =
+      '<rect width="100" height="100" fill="#EAEEF6"/>' +
+      '<path d="M16,100 C16,80 31,72 50,72 C69,72 84,80 84,100 Z" fill="#CBD5E8"/>' +
+      '<rect x="44" y="62" width="12" height="14" rx="6" fill="' + skin + '"/>' +
+      hairBack(hair, hc) + ears +
+      '<ellipse cx="50" cy="50" rx="22" ry="25" fill="' + skin + '"/>' +
+      accSVG(acc, hair) +
+      '<circle cx="43" cy="50.5" r="2.4" fill="#3A3030"/><circle cx="57" cy="50.5" r="2.4" fill="#3A3030"/>' +
+      '<path d="M45,60 Q50,64 55,60" fill="none" stroke="#B57B58" stroke-width="2" stroke-linecap="round"/>' +
+      hairFront(hair, hc) + glassesSVG(glasses);
+    return '<svg viewBox="0 0 100 100" width="' + size + '" height="' + size + '" style="display:block" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs><clipPath id="' + id + '"><circle cx="50" cy="50" r="50"/></clipPath></defs>' +
+      '<g clip-path="url(#' + id + ')">' + inner + '</g></svg>';
+  }
+  // avatar if the person has one, else the neutral coloured silhouette
+  function avatarFor(p, color, size) {
+    if (p && p.avatar) {
+      try { return '<span class="avatarbox" style="width:' + size + 'px;height:' + size + 'px">' + buildAvatar(JSON.parse(p.avatar), size) + '</span>'; }
+      catch (e) { /* fall through */ }
+    }
+    return silhouette(color);
+  }
   var ICON = {
     chev: '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
     back: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>',
@@ -33,7 +97,10 @@
     cake: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 21h16M5 21v-7h14v7M8 14V8m4 6V7m4 7V8M12 7V3"/></svg>',
     edit: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     gear: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
-    sheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>'
+    sheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+    search: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+    cards: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="16" rx="2"/><path d="M7 5V3h14v16h-2"/></svg>',
+    print: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>'
   };
 
   /* ---------------- API ---------------- */
@@ -55,7 +122,103 @@
   }
 
   /* ---------------- Auth ---------------- */
+  function leaveLanding() { document.body.classList.remove('landing'); }
+
+  /* ---------------- Public landing page ---------------- */
+  function renderLanding() {
+    document.body.classList.add('landing');
+    var heroFaces = [
+      { skin: '#F0C39C', hair: 'short', hairColor: '#5A3825', glasses: 'round' },
+      { skin: '#6B4423', hair: 'afro', hairColor: '#2B2520' },
+      { skin: '#E0A878', hair: 'hijab', hairColor: '#0CA8A8' },
+      { skin: '#F8D5B5', hair: 'long', hairColor: '#D7A94B' },
+      { skin: '#9C6B3F', hair: 'curly', hairColor: '#2B2520', acc: 'hearingaid' }
+    ].map(function (c) { return '<span class="av">' + buildAvatar(c, 62) + '</span>'; }).join('');
+
+    function feature(bg, color, glyph, title, body) {
+      return '<div class="fcard"><div class="ic" style="background:' + bg + ';color:' + color + '">' + glyph + '</div>' +
+        '<h3>' + title + '</h3><p>' + body + '</p></div>';
+    }
+
+    el('screen').innerHTML =
+      '<div class="land">' +
+        '<header class="lnav">' +
+          '<span class="wordmark">Parent<span>Recall</span></span>' +
+          '<button class="lnav-login" id="lNavLogin">Log in</button>' +
+        '</header>' +
+
+        '<section class="lhero">' +
+          '<h1>Never blank on a name at the school gate again.</h1>' +
+          '<p class="sub">ParentRecall is your private memory aid for your children\u2019s classmates, their parents, and the coaches \u2014 the names, the faces, and the little details that bring them back.</p>' +
+          '<div class="lcta">' +
+            '<button class="btn-primary" id="lGet">Get started \u2014 it\u2019s free</button>' +
+            '<button class="btn-ghost" id="lLogin">I already have an account</button>' +
+          '</div>' +
+          '<div class="lavatars">' + heroFaces + '</div>' +
+          '<p class="ltrust">Free \u00b7 Private by design \u00b7 No photos of children, ever</p>' +
+        '</section>' +
+
+        '<section class="lband"><div class="lwrap">' +
+          '<h2>You know the moment.</h2>' +
+          '<p>A parent waves hello and you smile back, scrambling \u2014 is that Oscar\u2019s mum? The swim coach? The name is right there, just out of reach. ParentRecall keeps all of it in one private place, so it\u2019s ready before you need it.</p>' +
+        '</div></section>' +
+
+        '<section class="lsteps"><div class="lwrap">' +
+          '<h2>How it works</h2>' +
+          '<ol>' +
+            '<li><div><div class="st">Add your child\u2019s clubs &amp; classes</div><div class="sd">Their class, swimming, football \u2014 whatever groups you need to remember people from.</div></div></li>' +
+            '<li><div><div class="st">Add the people, with a face</div><div class="sd">Build a friendly cartoon avatar for each one \u2014 and jot the detail that jogs your memory.</div></div></li>' +
+            '<li><div><div class="st">Find them fast, or practise</div><div class="sd">Search by name or a detail in a tap, or run quick flashcards until the names stick.</div></div></li>' +
+          '</ol>' +
+        '</div></section>' +
+
+        '<section class="lfeatures"><div class="lwrap">' +
+          '<h2>Everything you need to remember everyone</h2>' +
+          '<div class="fgrid">' +
+            feature('#FFEDE3', '#F2641E', '\uD83C\uDFA8', 'Cartoon avatars', 'Build a friendly face for everyone. No real photos of children, ever.') +
+            feature('#E1F5F5', '#0CA8A8', '\uD83D\uDD0E', 'Find anyone', 'Blanking at the gate? Search by name \u2014 or a detail like \u201cred Audi\u201d.') +
+            feature('#EAEFFB', '#18306C', '\uD83E\uDDE0', 'Practise mode', 'Flashcards that help a whole new class\u2019s names actually stick.') +
+            feature('#FEF3DA', '#B07D11', '\uD83C\uDF82', 'Birthday reminders', 'A gentle nudge so you can say happy birthday at drop-off.') +
+            feature('#EAEFFB', '#18306C', '\uD83D\uDC6A', 'Two parents, one account', 'Invite your partner so you\u2019re both covered, on the same lists.') +
+            feature('#E1F5F5', '#0CA8A8', '\uD83D\uDCCB', 'Set up in minutes', 'Paste a class list or import a spreadsheet to add everyone at once.') +
+          '</div>' +
+        '</div></section>' +
+
+        '<section class="lprivacy"><div class="lwrap">' +
+          '<span class="peyebrow">Built private</span>' +
+          '<h2>Your family\u2019s memory, and nobody else\u2019s.</h2>' +
+          '<ul>' +
+            '<li><span class="ck">\u2713</span><span>No photos of other people\u2019s children \u2014 ever. Faces are friendly cartoon avatars you build.</span></li>' +
+            '<li><span class="ck">\u2713</span><span>Surnames are shortened automatically \u2014 \u201cJohn Smith\u201d becomes \u201cJohn Sm\u201d.</span></li>' +
+            '<li><span class="ck">\u2713</span><span>No social feed, no sharing, no discovery. Your list is yours alone.</span></li>' +
+            '<li><span class="ck">\u2713</span><span>Export or delete everything, whenever you like.</span></li>' +
+          '</ul>' +
+        '</div></section>' +
+
+        '<section class="lfinal"><div class="lwrap">' +
+          '<h2>Walk in already knowing.</h2>' +
+          '<button class="btn-primary" id="lGet2">Get started \u2014 it\u2019s free</button>' +
+          '<button class="btn-ghost-light" id="lLogin2">Log in</button>' +
+        '</div></section>' +
+
+        '<footer class="lfoot">' +
+          '<span class="wordmark">Parent<span>Recall</span></span>' +
+          '<p>A Pacedall Labs product. \u00a9 2026.</p>' +
+        '</footer>' +
+      '</div>';
+
+    var get = function () { leaveLanding(); renderAuth('register'); };
+    var login = function () { leaveLanding(); renderAuth('login'); };
+    el('lGet').onclick = get;
+    el('lGet2').onclick = get;
+    el('lNavLogin').onclick = login;
+    el('lLogin').onclick = login;
+    el('lLogin2').onclick = login;
+    window.scrollTo(0, 0);
+  }
+
   function renderAuth(mode, errMsg) {
+    leaveLanding();
     mode = mode || 'login';
     var screen = el('screen');
     var isLogin = mode === 'login';
@@ -78,9 +241,11 @@
         '<div class="toggle">' + (isLogin ? "New here? " : 'Already have an account? ') +
           '<button id="authToggle" type="button">' + (isLogin ? 'Create an account' : 'Sign in') + '</button>' +
         '</div>' +
+        '<div class="toggle"><button id="authHome" type="button">\u2190 Back to home</button></div>' +
       '</div>';
 
     el('authToggle').onclick = function () { renderAuth(isLogin ? 'register' : 'login'); };
+    el('authHome').onclick = function () { renderLanding(); };
     var fl = el('forgotLink'); if (fl) fl.onclick = function () { renderForgot(el('a_email') ? el('a_email').value.trim() : ''); };
     el('authForm').onsubmit = function (e) {
       e.preventDefault();
@@ -105,7 +270,7 @@
     localStorage.removeItem(TOKEN_KEY);
     children = []; clubs = []; people = [];
     state = { view: 'home', childId: null, clubId: null, personId: null };
-    renderAuth('login');
+    renderLanding();
   }
 
   /* ---------------- Forgot / reset password ---------------- */
@@ -180,8 +345,13 @@
   }
 
   function loadMe() {
-    return api('/auth/me').then(function (d) { me = d.user; return d.user; });
+    return api('/auth/me').then(function (d) {
+      me = d.user;
+      household = d.household || { role: null, isAdmin: false, partner: null, adminEmail: null };
+      return d.user;
+    });
   }
+  function isAdmin() { return !household || household.isAdmin !== false; }
 
   /* ---------------- Data loaders ---------------- */
   function loadChildren() {
@@ -197,8 +367,11 @@
 
   /* ---------------- Render ---------------- */
   function render() {
+    leaveLanding();
     var screen = el('screen');
-    if (state.view === 'profile') screen.innerHTML = renderProfile();
+    if (state.view === 'find') screen.innerHTML = renderFind();
+    else if (state.view === 'quiz') screen.innerHTML = renderQuiz();
+    else if (state.view === 'profile') screen.innerHTML = renderProfile();
     else if (state.view === 'club') screen.innerHTML = renderClub();
     else screen.innerHTML = renderHome();
     bind();
@@ -210,13 +383,16 @@
 
   function renderHome() {
     var child = childById(state.childId) || children[0];
+    var admin = isAdmin();
     var opts = children.map(function (c) {
       return '<option value="' + c.id + '"' + (child && c.id === child.id ? ' selected' : '') + '>' + esc(c.name) + '</option>';
-    }).join('') + '<option value="__add">➕  Add a child…</option>';
+    }).join('') + (admin ? '<option value="__add">\u2795  Add a child\u2026</option>' : '');
 
     var rows;
     if (!children.length) {
-      rows = '<div class="empty"><div class="big">Let\u2019s add your first child</div><p>Add a child, then the clubs and classes you need to remember people from.</p></div>';
+      rows = admin
+        ? '<div class="empty"><div class="big">Let\u2019s add your first child</div><p>Add a child, then the clubs and classes you need to remember people from.</p></div>'
+        : '<div class="empty"><div class="big">Nothing here yet</div><p>Your account admin hasn\u2019t added a child yet. Once they do, their clubs and people will appear here for you too.</p></div>';
     } else if (!clubs.length) {
       rows = '<div class="empty"><div class="big">No clubs yet for ' + esc(child.name) + '</div><p>Add their class, swimming, football \u2014 whatever groups you need to remember people from.</p></div>';
     } else {
@@ -235,7 +411,7 @@
           '<button class="addtile" id="addClub"><span class="pl">' + ICON.plus + '</span>Add a club or class</button>' +
         '</div>'
       : '<div class="list" style="margin-top:8px">' + rows +
-          '<button class="addtile" id="addChildBtn"><span class="pl">' + ICON.plus + '</span>Add a child</button>' +
+          (admin ? '<button class="addtile" id="addChildBtn"><span class="pl">' + ICON.plus + '</span>Add a child</button>' : '') +
         '</div>';
 
     var banner = (me && me.email_verified === false)
@@ -243,14 +419,17 @@
       : '';
 
     return '<div class="topbar"><span class="wordmark-sm">Parent<span>Recall</span></span>' +
-        '<button class="iconbtn" id="accountBtn" aria-label="Account">' + ICON.gear + '</button></div>' +
+        '<span style="display:flex;gap:8px">' +
+          '<button class="iconbtn" id="findBtn" aria-label="Find anyone">' + ICON.search + '</button>' +
+          '<button class="iconbtn" id="accountBtn" aria-label="Account">' + ICON.gear + '</button>' +
+        '</span></div>' +
       '<header><img class="logo" src="/logo.png" alt="Parent Recall — Remember Everything"/></header>' +
       banner +
       (children.length ?
         '<div class="pick"><div class="lbl">Whose groups?</div><div class="selectpill">' +
           '<select id="childSel">' + opts + '</select>' +
           '<span class="av">' + ICON.down + '</span></div>' +
-          '<button class="ministep" id="editChild">' + ICON.edit + 'Rename or remove ' + esc(child.name) + '</button>' +
+          (admin ? '<button class="ministep" id="editChild">' + ICON.edit + 'Rename or remove ' + esc(child.name) + '</button>' : '') +
         '</div>' : '') +
       clubsBlock;
   }
@@ -261,7 +440,7 @@
     var child = childById(c.child_id) || { name: 'Back' };
     var rows = people.length
       ? people.map(function (p) {
-          return '<button class="prow" data-person="' + p.id + '">' + silhouette(raw(c.color)) +
+          return '<button class="prow" data-person="' + p.id + '">' + avatarFor(p, raw(c.color), 46) +
             '<span class="meta"><span class="nm">' + esc(p.name) + (p.birthday ? '<span class="bdaydot"></span>' : '') + '</span>' +
             '<span class="who">' + esc(p.role || 'Tap to add details') + '</span></span>' + ICON.chev + '</button>';
         }).join('')
@@ -273,8 +452,10 @@
         people.length + ' ' + (people.length === 1 ? 'person' : 'people') + '</p></div>' +
       '<div class="list">' + rows +
         '<button class="addtile" id="addPerson"><span class="pl">' + ICON.plus + '</span>Add someone</button>' +
+        (people.length >= 2 ? '<button class="ministep center" id="practiseBtn">' + ICON.cards + 'Practise these names' + '</button>' : '') +
         '<button class="ministep center" id="pasteList">' + ICON.plus + 'Paste a whole list at once</button>' +
         '<button class="ministep center" id="importList">' + ICON.sheet + 'Import from a spreadsheet</button>' +
+        (people.length ? '<button class="ministep center" id="printBtn">' + ICON.print + 'Print / save as PDF' + '</button>' : '') +
       '</div>';
   }
 
@@ -284,7 +465,7 @@
     if (!p || !c) { state.view = 'club'; return renderClub(); }
     return '<div class="topbar"><button class="back" id="back">' + ICON.back + esc(c.name) + '</button>' +
         '<span class="wordmark-sm">Parent<span>Recall</span></span></div>' +
-      '<div class="profile"><div class="phead">' + silhouette(raw(c.color)) +
+      '<div class="profile"><div class="phead">' + avatarFor(p, raw(c.color), 92) +
         '<h2>' + esc(p.name) + '</h2>' +
         (p.role ? '<div class="role">' + esc(p.role) + '</div>' : '') +
         '<span class="pin" style="background:' + raw(c.color) + '">' + esc(c.name) + '</span></div>' +
@@ -295,6 +476,101 @@
       '<div class="profile-actions"><button class="btn-edit" id="editPerson">Edit details</button>' +
         '<button class="btn-del" id="delPerson">Delete</button></div>' +
       '</div>';
+  }
+
+  /* ---------------- Find (search across all clubs) ---------------- */
+  var findResults = [];
+  var findTimer = null;
+  function renderFind() {
+    return '<div class="topbar"><button class="back" id="back">' + ICON.back + 'Home</button>' +
+        '<span class="wordmark-sm">Parent<span>Recall</span></span></div>' +
+      '<div class="findbar"><div class="findinput">' +
+        ICON.search +
+        '<input id="findInput" placeholder="Find anyone \u2014 a name or a detail\u2026" autocomplete="off" autofocus/>' +
+      '</div></div>' +
+      '<div id="findResults" class="results"></div>';
+  }
+  function runFind(q) {
+    if (!q) { el('findResults').innerHTML = '<div class="empty"><p>Type a name, or a detail you do remember \u2014 \u201cred Audi\u201d, \u201cglasses\u201d, \u201cclass rep\u201d.</p></div>'; return; }
+    api('/people/search?q=' + encodeURIComponent(q)).then(function (rows) {
+      findResults = rows;
+      if (!rows.length) { el('findResults').innerHTML = '<div class="empty"><div class="big">Nothing matches \u201c' + esc(q) + '\u201d</div></div>'; return; }
+      el('findResults').innerHTML = rows.map(function (r) {
+        var snippet = r.hooks || r.role || r.parents || '';
+        return '<button class="rcard" data-find="' + r.id + '">' + avatarFor(r, raw(r.club_color), 46) +
+          '<span style="flex:1;min-width:0">' +
+            '<span class="rgtag" style="background:' + raw(r.club_color) + '">' + esc(r.child_name) + ' \u00b7 ' + esc(r.club_name) + '</span>' +
+            '<div class="rname">' + esc(r.name) + '</div>' +
+            (snippet ? '<div class="rhook">' + esc(snippet) + '</div>' : '') +
+          '</span></button>';
+      }).join('');
+    }).catch(function () {});
+  }
+  function openFoundPerson(r) {
+    state.childId = r.child_id;
+    loadClubs(r.child_id)
+      .then(function () { state.clubId = r.club_id; return loadPeople(r.club_id); })
+      .then(function () { state.personId = r.id; state.view = 'profile'; render(); window.scrollTo(0, 0); });
+  }
+
+  /* ---------------- Practise (flashcards + light spaced repetition) ---------------- */
+  var quiz = { list: [], idx: 0, show: false, got: 0, missed: [], color: 'blue' };
+  function statKey(id) { return 'pr_stat_' + id; }
+  function getStat(id) { try { return JSON.parse(localStorage.getItem(statKey(id))) || { seen: 0, missed: 0 }; } catch (e) { return { seen: 0, missed: 0 }; } }
+  function setStat(id, s) { try { localStorage.setItem(statKey(id), JSON.stringify(s)); } catch (e) {} }
+  function startQuiz(list, color) {
+    // weight: previously-missed first, then new, with a little randomness
+    var ordered = list.map(function (p) {
+      var st = getStat(p.id);
+      return { p: p, w: st.missed * 3 + (st.seen === 0 ? 2 : 0) + Math.random() };
+    }).sort(function (a, b) { return b.w - a.w; }).map(function (x) { return x.p; });
+    quiz = { list: ordered, idx: 0, show: false, got: 0, missed: [], color: color };
+    state.view = 'quiz'; render(); window.scrollTo(0, 0);
+  }
+  function answerQuiz(knew) {
+    var p = quiz.list[quiz.idx];
+    var st = getStat(p.id); st.seen += 1; if (!knew) { st.missed += 1; quiz.missed.push(p); } else { st.missed = Math.max(0, st.missed - 1); quiz.got += 1; }
+    setStat(p.id, st);
+    quiz.idx += 1; quiz.show = false; render(); window.scrollTo(0, 0);
+  }
+  function renderQuiz() {
+    if (quiz.idx >= quiz.list.length) {
+      var total = quiz.list.length;
+      return '<div class="topbar"><button class="back" id="back">' + ICON.back + 'Back</button><span class="wordmark-sm">Parent<span>Recall</span></span></div>' +
+        '<div class="quizdone"><div class="qbig">' + quiz.got + ' / ' + total + '</div>' +
+        '<p>' + (quiz.got === total ? 'Perfect \u2014 you know everyone!' : 'Nice work. Practice sticks \u2014 the ones you missed will come up first next time.') + '</p>' +
+        (quiz.missed.length ? '<button class="save" id="quizMissed">Practise the ' + quiz.missed.length + ' you missed</button>' : '') +
+        '<button class="cancel" id="quizDone">Done</button></div>';
+    }
+    var p = quiz.list[quiz.idx];
+    var color = raw(quiz.color);
+    return '<div class="topbar"><button class="back" id="back">' + ICON.back + 'Stop</button>' +
+        '<span class="qprog">' + (quiz.idx + 1) + ' / ' + quiz.list.length + '</span></div>' +
+      '<div class="quiz">' +
+        '<div class="qcard">' +
+          '<span class="qavatar">' + avatarFor(p, color, 150) + '</span>' +
+          (quiz.show
+            ? '<div class="qname">' + esc(p.name) + '</div>' + (p.role ? '<div class="qrole">' + esc(p.role) + '</div>' : '')
+            : '<div class="qprompt">Who is this?</div>') +
+        '</div>' +
+        (quiz.show
+          ? '<div class="qbtns"><button class="qmiss" id="qMiss">Didn\u2019t know</button><button class="qgot" id="qGot">Got it</button></div>'
+          : '<button class="save" id="qReveal">Reveal name</button>') +
+      '</div>';
+  }
+
+  /* ---------------- Print / save as PDF ---------------- */
+  function printClub() {
+    var c = clubById(state.clubId);
+    var cells = people.map(function (p) {
+      var face;
+      try { face = p.avatar ? buildAvatar(JSON.parse(p.avatar), 110) : ''; } catch (e) { face = ''; }
+      if (!face) face = '<span class="psil" style="background:' + raw(c.color) + '22"></span>';
+      return '<div class="pcell">' + face + '<div class="pcn">' + esc(p.name) + '</div>' +
+        (p.role ? '<div class="pcr">' + esc(p.role) + '</div>' : '') + '</div>';
+    }).join('');
+    el('printArea').innerHTML = '<h1>' + esc(c.name) + (c.sub ? ' \u00b7 ' + esc(c.sub) : '') + '</h1><div class="pgrid">' + cells + '</div>';
+    window.print();
   }
 
   /* ---------------- Sheets ---------------- */
@@ -344,9 +620,35 @@
 
   function sheetPerson(edit) {
     var p = edit ? personById(state.personId) : null;
+    // initial avatar config
+    var cfg = { skin: SKIN[2], hairColor: HAIRCOL[1], hair: 'short', glasses: 'none', acc: 'none' };
+    if (p && p.avatar) { try { var saved = JSON.parse(p.avatar); cfg.skin = saved.skin || cfg.skin; cfg.hairColor = saved.hairColor || cfg.hairColor; cfg.hair = saved.hair || cfg.hair; cfg.glasses = saved.glasses || cfg.glasses; cfg.acc = saved.acc || cfg.acc; } catch (e) {} }
+
+    function swatches(list, key, kind) {
+      return list.map(function (v) {
+        var sel = cfg[key] === v ? ' sel' : '';
+        return '<button type="button" class="swatch' + sel + '" data-' + kind + '="' + v + '" style="background:' + v + '"></button>';
+      }).join('');
+    }
+    function chips(list, key, kind, labels) {
+      return list.map(function (v) {
+        var sel = cfg[key] === v ? ' sel' : '';
+        return '<button type="button" class="chip' + sel + '" data-' + kind + '="' + v + '">' + labels[v] + '</button>';
+      }).join('');
+    }
+
     el('sheet').innerHTML =
       '<div class="grab"></div><h3>' + (edit ? 'Edit details' : 'Add someone') + '</h3>' +
-      '<p class="lead">A first name is all you need now \u2014 everything else you can add the moment it comes back to you.</p>' +
+      '<div class="avbuilder">' +
+        '<span class="avpreview" id="avPreview">' + buildAvatar(cfg, 76) + '</span>' +
+        '<div class="avcontrols">' +
+          '<div class="avlabel">Skin</div><div class="swatchrow" id="skinRow">' + swatches(SKIN, 'skin', 'skin') + '</div>' +
+          '<div class="avlabel">Hair colour</div><div class="swatchrow" id="hcRow">' + swatches(HAIRCOL, 'hairColor', 'haircolor') + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="avlabel">Hair style</div><div class="chiprow" id="hairRow">' + chips(HAIRSTYLE, 'hair', 'hair', HAIRLABEL) + '</div>' +
+      '<div class="avlabel">Glasses</div><div class="chiprow" id="glassRow">' + chips(GLASSES, 'glasses', 'glasses', GLASSLABEL) + '</div>' +
+      '<div class="avlabel">Accessory</div><div class="chiprow" id="accRow">' + chips(ACC, 'acc', 'acc', ACCLABEL) + '</div>' +
       '<label>Name <span class="req">·required</span></label>' +
       '<input class="f" id="f_pname" placeholder="e.g. Oscar" value="' + (p ? attr(p.name) : '') + '" autocomplete="off"/>' +
       '<label>Who are they? <span class="opt">optional</span></label>' +
@@ -355,19 +657,56 @@
       '<input class="f" id="f_parents" placeholder="e.g. Priya (mum), Dan (dad)" value="' + (p ? attr(p.parents) : '') + '" autocomplete="off"/>' +
       '<label>What jogs your memory <span class="opt">optional</span></label>' +
       '<textarea class="f" id="f_hooks" rows="3" placeholder="Red Audi · always in running gear · sits front-left">' + (p ? esc(p.hooks) : '') + '</textarea>' +
-      '<p class="hint">This is the bit that actually helps \u2014 the car, the job, where they sit, who they\u2019re friends with.</p>' +
+      '<div class="chiprow hookchips" id="hookChips">' +
+        ['Car', 'Job', 'Where they live', 'Looks like', 'Friends with'].map(function (l) { return '<button type="button" class="chip hookchip" data-hook="' + l + '">+ ' + l + '</button>'; }).join('') +
+      '</div>' +
+      '<p class="hint">Tap a prompt or just type \u2014 the car, the job, where they sit, who they\u2019re friends with.</p>' +
       '<label>Birthday <span class="opt">optional</span></label>' +
       '<input class="f" id="f_bday" placeholder="e.g. 12 March" value="' + (p ? attr(p.birthday) : '') + '" autocomplete="off"/>' +
       '<button class="save" id="saveBtn"' + (p ? '' : ' disabled') + '>' + (edit ? 'Save' : 'Add') + '</button>' +
+      (edit ? '' : '<button class="save secondary" id="saveAnotherBtn" disabled>Save &amp; add another</button>') +
       '<button class="cancel" id="cancelBtn">Cancel</button>';
-    show(); wireSheet('f_pname', function () {
-      var body = {
+    show();
+
+    function refresh() { el('avPreview').innerHTML = buildAvatar(cfg, 76); }
+    function pick(rowId, kind, key) {
+      Array.prototype.forEach.call(el(rowId).querySelectorAll('[data-' + kind + ']'), function (b) {
+        b.onclick = function () {
+          cfg[key] = b.getAttribute('data-' + kind);
+          Array.prototype.forEach.call(el(rowId).children, function (x) { x.classList.remove('sel'); });
+          b.classList.add('sel');
+          refresh();
+        };
+      });
+    }
+    pick('skinRow', 'skin', 'skin');
+    pick('hcRow', 'haircolor', 'hairColor');
+    pick('hairRow', 'hair', 'hair');
+    pick('glassRow', 'glasses', 'glasses');
+    pick('accRow', 'acc', 'acc');
+
+    // hook prompt chips: insert a labelled line into the notes box
+    Array.prototype.forEach.call(el('hookChips').querySelectorAll('[data-hook]'), function (b) {
+      b.onclick = function () {
+        var ta = el('f_hooks'); var pre = ta.value.replace(/\s+$/, '');
+        ta.value = (pre ? pre + '\n' : '') + b.getAttribute('data-hook') + ': ';
+        ta.focus();
+      };
+    });
+
+    function buildBody() {
+      return {
         name: el('f_pname').value.trim(),
         role: el('f_role').value.trim(),
         parents: el('f_parents').value.trim(),
         hooks: el('f_hooks').value.trim(),
-        birthday: el('f_bday').value.trim()
+        birthday: el('f_bday').value.trim(),
+        avatar: JSON.stringify(cfg)
       };
+    }
+
+    wireSheet('f_pname', function () {
+      var body = buildBody();
       if (edit) {
         return api('/people/' + p.id, { method: 'PUT', body: body }).then(function () {
           return loadPeople(state.clubId).then(function () { state.view = 'profile'; });
@@ -375,9 +714,23 @@
       }
       body.clubId = state.clubId;
       return api('/people', { method: 'POST', body: body }).then(function () {
-        return loadPeople(state.clubId).then(function () { state.view = 'club'; });
+        return loadPeople(state.clubId).then(function () { return loadClubs(state.childId); }).then(function () { state.view = 'club'; });
       });
     });
+
+    if (!edit) {
+      var name = el('f_pname'), again = el('saveAnotherBtn');
+      name.addEventListener('input', function () { again.disabled = !name.value.trim(); });
+      again.onclick = function () {
+        if (!name.value.trim()) return;
+        again.disabled = true; again.textContent = 'Saving…';
+        var body = buildBody(); body.clubId = state.clubId;
+        api('/people', { method: 'POST', body: body })
+          .then(function () { return loadPeople(state.clubId).then(function () { return loadClubs(state.childId); }); })
+          .then(function () { toast('Added \u2014 next one'); sheetPerson(false); })
+          .catch(function (err) { again.disabled = false; again.textContent = 'Save & add another'; alert(err.message); });
+      };
+    }
   }
 
   function sheetEditChild() {
@@ -418,14 +771,17 @@
       '<label>When / where <span class="opt">optional</span></label>' +
       '<input class="f" id="f_gsub" value="' + attr(c.sub) + '" autocomplete="off"/>' +
       '<button class="save" id="saveBtn">Save</button>' +
-      '<button class="danger" id="delBtn">Delete this club and everyone in it</button>' +
+      (isAdmin()
+        ? '<button class="danger" id="delBtn">Delete this club and everyone in it</button>'
+        : '<p class="hint" style="text-align:center">Only the account admin can delete a club.</p>') +
       '<button class="cancel" id="cancelBtn">Cancel</button>';
     show();
     wireSheet('f_gname', function () {
       return api('/clubs/' + c.id, { method: 'PUT', body: { name: el('f_gname').value.trim(), sub: el('f_gsub').value.trim() } })
         .then(function () { return loadClubs(state.childId).then(function () { state.view = 'club'; }); });
     });
-    el('delBtn').onclick = function () {
+    var delBtn = el('delBtn');
+    if (delBtn) delBtn.onclick = function () {
       if (!confirm('Delete ' + c.name + ' and everyone in it? This can\u2019t be undone.')) return;
       api('/clubs/' + c.id, { method: 'DELETE' }).then(function () {
         return loadClubs(state.childId).then(function () { hide(); state.view = 'home'; render(); window.scrollTo(0, 0); });
@@ -480,17 +836,58 @@
   }
 
   function sheetAccount() {
+    var admin = isAdmin();
+    var roleLine = household.role
+      ? (admin
+          ? (household.partner
+              ? 'You\u2019re the <b>admin</b>. <b>' + esc(household.partner.email) + '</b> is on this account as your partner.'
+              : 'You\u2019re the <b>admin</b> of this account.')
+          : 'You\u2019re a <b>partner</b> on <b>' + esc(household.adminEmail || 'the admin') + '</b>\u2019s account.')
+      : '';
+
+    var partnerBlock;
+    if (admin) {
+      partnerBlock = household.partner
+        ? '<button class="rowbtn" id="acRemovePartner">Remove partner (' + esc(household.partner.email) + ')</button>'
+        : '<button class="rowbtn" id="acInvite">' + ICON.plus + 'Invite my partner</button>';
+    } else {
+      partnerBlock = '<button class="rowbtn" id="acLeave">Leave this account</button>';
+    }
+
     el('sheet').innerHTML =
       '<div class="grab"></div><h3>Account</h3>' +
       '<p class="lead">Signed in as <b>' + esc(me ? me.email : '') + '</b>' + (me && me.email_verified ? '' : ' \u00b7 not yet verified') + '.</p>' +
-      '<button class="rowbtn" id="acExport">Export my data (JSON)</button>' +
+      (roleLine ? '<p class="rolenote">' + roleLine + '</p>' : '') +
+      partnerBlock +
+      (admin ? '<button class="rowbtn" id="acExport">Export my data (JSON)</button>' : '') +
       '<button class="rowbtn" id="acSignout">Sign out</button>' +
-      '<button class="danger" id="acDelete">Delete my account</button>' +
+      (admin ? '<button class="danger" id="acDelete">Delete this account</button>' : '') +
       '<button class="cancel" id="cancelBtn">Close</button>';
     show();
     el('cancelBtn').onclick = hide;
     el('acSignout').onclick = function () { hide(); signOut(); };
-    el('acExport').onclick = function () {
+
+    var inviteBtn = el('acInvite');
+    if (inviteBtn) inviteBtn.onclick = sheetInvitePartner;
+
+    var removeBtn = el('acRemovePartner');
+    if (removeBtn) removeBtn.onclick = function () {
+      if (!confirm('Remove ' + household.partner.email + '? They\u2019ll lose access, but everything they added stays on the account.')) return;
+      api('/auth/household/associate', { method: 'DELETE' }).then(function () {
+        return loadMe().then(function () { toast('Partner removed.'); sheetAccount(); });
+      }).catch(function (err) { alert(err.message); });
+    };
+
+    var leaveBtn = el('acLeave');
+    if (leaveBtn) leaveBtn.onclick = function () {
+      if (!confirm('Leave this account? You\u2019ll lose access to the family\u2019s lists. What you added stays with the admin.')) return;
+      api('/auth/household/leave', { method: 'POST' }).then(function () {
+        hide(); signOut(); toast('You\u2019ve left the account.');
+      }).catch(function (err) { alert(err.message); });
+    };
+
+    var exportBtn = el('acExport');
+    if (exportBtn) exportBtn.onclick = function () {
       api('/auth/export').then(function (data) {
         var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         var url = URL.createObjectURL(blob);
@@ -501,13 +898,43 @@
         toast('Your data has been downloaded.');
       }).catch(function (err) { alert(err.message); });
     };
-    el('acDelete').onclick = function () {
-      if (!confirm('Delete your account and ALL your data permanently? This cannot be undone.')) return;
+
+    var deleteBtn = el('acDelete');
+    if (deleteBtn) deleteBtn.onclick = function () {
+      var warn = household.partner
+        ? 'Delete this account and ALL its data permanently? This also removes your partner\u2019s access. This cannot be undone.'
+        : 'Delete your account and ALL your data permanently? This cannot be undone.';
+      if (!confirm(warn)) return;
       if (!confirm('Are you absolutely sure? Everything will be erased.')) return;
       api('/auth/account', { method: 'DELETE' }).then(function () {
         hide(); signOut(); toast('Your account has been deleted.');
       }).catch(function (err) { alert(err.message); });
     };
+  }
+
+  function sheetInvitePartner() {
+    el('sheet').innerHTML =
+      '<div class="grab"></div><h3>Invite your partner</h3>' +
+      '<p class="lead">Add one partner to share this account. They get their own sign-in and can add and edit people, hooks and clubs \u2014 but only you (the admin) can remove a child, delete a club, export, or delete the account.</p>' +
+      '<label>Their email</label>' +
+      '<input class="f" id="f_invite" type="email" placeholder="partner@example.com" autocomplete="off"/>' +
+      '<p class="hint">We\u2019ll email them a link to set a password and join.</p>' +
+      '<button class="save" id="saveBtn" disabled>Send invite</button>' +
+      '<button class="cancel" id="cancelBtn">Cancel</button>';
+    show();
+    var input = el('f_invite'), save = el('saveBtn');
+    input.addEventListener('input', function () { save.disabled = !/^\S+@\S+\.\S+$/.test(input.value.trim()); });
+    el('cancelBtn').onclick = sheetAccount;
+    save.onclick = function () {
+      var email = input.value.trim();
+      if (!/^\S+@\S+\.\S+$/.test(email)) return;
+      save.disabled = true; save.textContent = 'Sending…';
+      api('/auth/household/invite', { method: 'POST', body: { email: email } })
+        .then(function () { return loadMe(); })
+        .then(function () { toast('Invite sent to ' + email); sheetAccount(); })
+        .catch(function (err) { save.disabled = false; save.textContent = 'Send invite'; alert(err.message); });
+    };
+    setTimeout(function () { input.focus(); }, 60);
   }
 
   function downloadTemplate() {
@@ -691,10 +1118,38 @@
       }).catch(function (err) { alert(err.message); });
     };
     var accountBtn = el('accountBtn'); if (accountBtn) accountBtn.onclick = sheetAccount;
+    var findBtn = el('findBtn'); if (findBtn) findBtn.onclick = function () { state.view = 'find'; render(); };
     var editChild = el('editChild'); if (editChild) editChild.onclick = sheetEditChild;
     var editClub = el('editClub'); if (editClub) editClub.onclick = sheetEditClub;
     var pasteList = el('pasteList'); if (pasteList) pasteList.onclick = sheetPasteList;
     var importList = el('importList'); if (importList) importList.onclick = sheetImport;
+    var practiseBtn = el('practiseBtn'); if (practiseBtn) practiseBtn.onclick = function () { var c = clubById(state.clubId); startQuiz(people.slice(), c ? c.color : 'blue'); };
+    var printBtn = el('printBtn'); if (printBtn) printBtn.onclick = printClub;
+
+    // Find screen
+    var findInput = el('findInput');
+    if (findInput) {
+      runFind('');
+      findInput.oninput = function (e) {
+        var q = e.target.value.trim();
+        clearTimeout(findTimer);
+        findTimer = setTimeout(function () { runFind(q); }, 180);
+      };
+      setTimeout(function () { findInput.focus(); }, 60);
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('[data-find]'), function (b) {
+      b.onclick = function () {
+        var r = findResults.filter(function (x) { return String(x.id) === b.getAttribute('data-find'); })[0];
+        if (r) openFoundPerson(r);
+      };
+    });
+
+    // Quiz screen
+    var qReveal = el('qReveal'); if (qReveal) qReveal.onclick = function () { quiz.show = true; render(); };
+    var qGot = el('qGot'); if (qGot) qGot.onclick = function () { answerQuiz(true); };
+    var qMiss = el('qMiss'); if (qMiss) qMiss.onclick = function () { answerQuiz(false); };
+    var quizMissed = el('quizMissed'); if (quizMissed) quizMissed.onclick = function () { startQuiz(quiz.missed.slice(), quiz.color); };
+    var quizDone = el('quizDone'); if (quizDone) quizDone.onclick = function () { state.view = 'club'; render(); window.scrollTo(0, 0); };
     var vr = el('verifyResend'); if (vr) vr.onclick = function () {
       vr.disabled = true; vr.textContent = 'Sending…';
       api('/auth/resend-verification', { method: 'POST' })
@@ -715,7 +1170,9 @@
       };
     });
     var back = el('back'); if (back) back.onclick = function () {
-      state.view = (state.view === 'profile') ? 'club' : 'home';
+      if (state.view === 'profile') state.view = 'club';
+      else if (state.view === 'quiz') state.view = 'club';
+      else state.view = 'home';
       render(); window.scrollTo(0, 0);
     };
   }
@@ -759,12 +1216,13 @@
     if (resetToken) { renderReset(resetToken); return; }
 
     if (token) {
+      leaveLanding();
       boot(function () {
         if (verified === '1') toast('Email verified — you\u2019re all set.');
         else if (verified === '0') toast('That link has expired. Tap \u201cResend\u201d for a new one.');
       });
     } else {
-      renderAuth('login');
+      renderLanding();
       if (verified === '1') toast('Email verified — please sign in.');
       else if (verified === '0') toast('That verification link has expired.');
     }

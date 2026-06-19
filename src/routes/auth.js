@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const db = require('../db');
-const { sign, requireAuth } = require('../middleware/auth');
+const { sign, requireAuth, loadHousehold, requireAdmin } = require('../middleware/auth');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../mailer');
 
 const router = express.Router();
@@ -84,6 +84,9 @@ router.post('/register', authLimiter, async (req, res) => {
       [email, hash, name]
     );
     const user = rows[0];
+    // new sign-ups own a fresh household as admin
+    const h = await db.query('INSERT INTO households (created_at) VALUES (now()) RETURNING id');
+    await db.query('INSERT INTO household_members (household_id, user_id, role) VALUES ($1, $2, $3)', [h.rows[0].id, user.id, 'admin']);
     await issueVerification(req, user.id, user.email);
     return res.status(201).json({ token: sign(user.id), user: publicUser(user) });
   } catch (err) {
@@ -109,11 +112,28 @@ router.post('/login', authLimiter, async (req, res) => {
   }
 });
 
-// GET /api/auth/me  — current user (used to refresh verified status)
+// GET /api/auth/me  — current user + household role/partner
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await db.query('SELECT id, email, name, email_verified FROM users WHERE id = $1', [req.userId]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found.' });
-  res.json({ user: publicUser(rows[0]) });
+
+  let household = { role: null, isAdmin: false, partner: null, adminEmail: null };
+  const mem = await db.query('SELECT household_id, role FROM household_members WHERE user_id = $1', [req.userId]);
+  if (mem.rows[0]) {
+    const hid = mem.rows[0].household_id;
+    household.role = mem.rows[0].role;
+    household.isAdmin = mem.rows[0].role === 'admin';
+    const others = await db.query(
+      `SELECT u.email, hm.role FROM household_members hm JOIN users u ON u.id = hm.user_id
+       WHERE hm.household_id = $1 AND hm.user_id <> $2`,
+      [hid, req.userId]
+    );
+    others.rows.forEach(function (o) {
+      if (o.role === 'admin') household.adminEmail = o.email;
+      else household.partner = { email: o.email };
+    });
+  }
+  res.json({ user: publicUser(rows[0]), household: household });
 });
 
 // GET /api/auth/verify?token=...  — clicked from the email; redirects back to the app
@@ -182,18 +202,23 @@ router.post('/reset', authLimiter, async (req, res) => {
   }
 });
 
-// GET /api/auth/export  — all of the user's data as JSON (GDPR-friendly)
-router.get('/export', requireAuth, async (req, res) => {
+// GET /api/auth/export  — all household data as JSON (admin only)
+router.get('/export', requireAuth, loadHousehold, requireAdmin, async (req, res) => {
   try {
     const u = await db.query('SELECT id, email, name, email_verified, created_at FROM users WHERE id = $1', [req.userId]);
     if (!u.rows[0]) return res.status(404).json({ error: 'Not found.' });
-    const children = await db.query('SELECT id, name, created_at FROM children WHERE user_id = $1 ORDER BY id', [req.userId]);
-    const clubs = await db.query('SELECT id, child_id, name, sub, color, created_at FROM clubs WHERE user_id = $1 ORDER BY id', [req.userId]);
-    const people = await db.query('SELECT id, club_id, name, role, parents, hooks, birthday, created_at FROM people WHERE user_id = $1 ORDER BY id', [req.userId]);
+    const members = await db.query(
+      `SELECT u.email, hm.role FROM household_members hm JOIN users u ON u.id = hm.user_id WHERE hm.household_id = $1`,
+      [req.householdId]
+    );
+    const children = await db.query('SELECT id, name, created_at FROM children WHERE household_id = $1 ORDER BY id', [req.householdId]);
+    const clubs = await db.query('SELECT id, child_id, name, sub, color, created_at FROM clubs WHERE household_id = $1 ORDER BY id', [req.householdId]);
+    const people = await db.query('SELECT id, club_id, name, role, parents, hooks, birthday, created_at FROM people WHERE household_id = $1 ORDER BY id', [req.householdId]);
     res.setHeader('Content-Disposition', 'attachment; filename="parentrecall-export.json"');
     res.json({
       exported_at: new Date().toISOString(),
       account: u.rows[0],
+      members: members.rows,
       children: children.rows,
       clubs: clubs.rows,
       people: people.rows,
@@ -204,15 +229,89 @@ router.get('/export', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/auth/account  — permanently delete the account and all its data
-router.delete('/account', requireAuth, async (req, res) => {
+// DELETE /api/auth/account  — admin only: delete the whole household + both members
+router.delete('/account', requireAuth, loadHousehold, requireAdmin, async (req, res) => {
   try {
-    const { rowCount } = await db.query('DELETE FROM users WHERE id = $1', [req.userId]);
-    if (!rowCount) return res.status(404).json({ error: 'Not found.' });
+    const members = await db.query('SELECT user_id FROM household_members WHERE household_id = $1', [req.householdId]);
+    // Deleting the household cascades children/clubs/people (household_id FK) and memberships.
+    await db.query('DELETE FROM households WHERE id = $1', [req.householdId]);
+    // Then remove the member user accounts themselves.
+    for (const m of members.rows) {
+      await db.query('DELETE FROM users WHERE id = $1', [m.user_id]);
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error('delete account error', err);
     res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
+// POST /api/auth/household/invite { email }  — admin adds the one associate
+router.post('/household/invite', authLimiter, requireAuth, loadHousehold, requireAdmin, async (req, res) => {
+  const email = (req.body.email || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
+
+  const meRow = await db.query('SELECT email FROM users WHERE id = $1', [req.userId]);
+  if (meRow.rows[0] && meRow.rows[0].email === email) return res.status(400).json({ error: 'That\u2019s your own email.' });
+
+  const cnt = await db.query('SELECT COUNT(*)::int AS n FROM household_members WHERE household_id = $1', [req.householdId]);
+  if (cnt.rows[0].n >= 2) return res.status(409).json({ error: 'You already have a partner on this account. Remove them first.' });
+
+  const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
+  if (existing.rows[0]) return res.status(409).json({ error: 'That email already has a ParentRecall account and can\u2019t be added.' });
+
+  try {
+    const randomHash = await bcrypt.hash(crypto.randomBytes(24).toString('hex'), 12);
+    const created = await db.query(
+      'INSERT INTO users (email, password_hash, name, email_verified) VALUES ($1, $2, $3, $4) RETURNING id',
+      [email, randomHash, '', false]
+    );
+    const assocId = created.rows[0].id;
+    await db.query('INSERT INTO household_members (household_id, user_id, role) VALUES ($1, $2, $3)', [req.householdId, assocId, 'associate']);
+    const raw = await createToken(assocId, 'reset', 60 * 48); // 48h set-password window
+    const link = baseUrl(req) + '/?reset=' + raw;
+    try { await sendPasswordResetEmail(email, link); } catch (e) { console.error('invite email failed', e.message); }
+    return res.json({ ok: true, partner: { email: email } });
+  } catch (err) {
+    console.error('invite error', err);
+    return res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
+// Reassign a member's authored rows to another member, then remove them.
+async function detachMember(householdId, fromUserId, toUserId) {
+  if (toUserId) {
+    await db.query('UPDATE children SET user_id = $1 WHERE household_id = $2 AND user_id = $3', [toUserId, householdId, fromUserId]);
+    await db.query('UPDATE clubs SET user_id = $1 WHERE household_id = $2 AND user_id = $3', [toUserId, householdId, fromUserId]);
+    await db.query('UPDATE people SET user_id = $1 WHERE household_id = $2 AND user_id = $3', [toUserId, householdId, fromUserId]);
+  }
+  await db.query('DELETE FROM household_members WHERE household_id = $1 AND user_id = $2', [householdId, fromUserId]);
+  await db.query('DELETE FROM users WHERE id = $1', [fromUserId]);
+}
+
+// DELETE /api/auth/household/associate  — admin removes the partner (data is kept)
+router.delete('/household/associate', requireAuth, loadHousehold, requireAdmin, async (req, res) => {
+  try {
+    const assoc = await db.query("SELECT user_id FROM household_members WHERE household_id = $1 AND role = 'associate'", [req.householdId]);
+    if (!assoc.rows[0]) return res.status(404).json({ error: 'No partner to remove.' });
+    await detachMember(req.householdId, assoc.rows[0].user_id, req.userId);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('remove associate error', err);
+    return res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
+// POST /api/auth/household/leave  — associate removes themselves (data is kept)
+router.post('/household/leave', requireAuth, loadHousehold, async (req, res) => {
+  if (req.role === 'admin') return res.status(400).json({ error: 'The admin can\u2019t leave \u2014 delete the account instead.' });
+  try {
+    const admin = await db.query("SELECT user_id FROM household_members WHERE household_id = $1 AND role = 'admin'", [req.householdId]);
+    await detachMember(req.householdId, req.userId, admin.rows[0] ? admin.rows[0].user_id : null);
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('leave error', err);
+    return res.status(500).json({ error: 'Something went wrong.' });
   }
 });
 
