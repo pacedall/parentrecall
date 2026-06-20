@@ -3,7 +3,7 @@
 :root{
   --navy:#18306C; --ink:#18306C;
   --orange:#F2641E; --teal:#0CA8A8; --blue:#1890B4; --amber:#F5B72E; --red:#E5403A;
-  --paper:#FFFFFF; --card:#FFFFFF; --muted:#6B7795; --hair:#E7EBF3;
+  --paper:#FFFFFF; --card:#FFFFFF; --muted:#5E6A86; --hair:#E7EBF3;
   --shadow:0 1px 2px rgba(24,48,108,.07), 0 6px 18px rgba(24,48,108,.10);
 }
 *{box-sizing:border-box}
@@ -254,3 +254,66 @@ body.landing #app{max-width:none;padding-bottom:0}
 .lfoot{text-align:center;padding:32px 20px;border-top:1px solid var(--hair);color:var(--muted)}
 .lfoot .wordmark{font-size:16px}
 .lfoot p{font-size:12.5px;margin:9px 0 0}
+
+/* Landing footer links + register agree line */
+.lfootlinks{margin:10px 0 2px}
+.lfootlinks a{color:var(--navy);font-weight:600;font-size:13px;text-decoration:none;margin:0 9px}
+.lfootlinks a:hover{text-decoration:underline}
+.auth .agree{font-size:12.5px;color:var(--muted);line-height:1.5;margin:14px 0 0;text-align:center}
+.auth .agree a{color:var(--orange);font-weight:600;text-decoration:none}
+
+/* Privacy/Terms links in the account sheet */
+.sheetlegal{text-align:center;font-size:12.5px;color:var(--muted);margin:14px 0 2px}
+.sheetlegal a{color:var(--muted);font-weight:600;text-decoration:none;margin:0 4px}
+.sheetlegal a:hover{color:var(--navy);text-decoration:underline}
+
+/* Person type tag */
+.ptag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.02em;color:var(--navy);background:#EAEFFB;border:1px solid #DCE3F6;border-radius:20px;padding:1px 8px;margin-left:7px;vertical-align:middle;white-space:nowrap}
+.phead .ptag{margin:9px 0 0;font-size:12px;padding:2px 11px}
+
+/* password requirements hint */
+.hint.pwreq{margin:7px 2px 2px;font-size:12px;color:var(--muted);line-height:1.45}
+
+/* Parent/carer labelled rows */
+.parentrow{display:flex;gap:8px;margin-bottom:8px}
+.parentrow .f{margin:0}
+.parentrow input{flex:1;min-width:0}
+.parentrow .psel{flex:none;width:138px}
+.pcardx .prow2{margin:2px 0}
+.pcardx .plabel{display:inline-block;font-size:11px;font-weight:700;color:var(--navy);background:#EAEFFB;border-radius:20px;padding:1px 9px;margin-right:8px}
+
+/* First-run "getting started" card */
+.getstarted{background:linear-gradient(180deg,#FFFFFF,#FBFCFE);border:1px solid var(--hair);border-radius:18px;padding:20px 18px;margin:8px 0 14px;box-shadow:var(--shadow)}
+.gseyebrow{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--orange)}
+.gshead{font-family:Poppins,sans-serif;font-weight:800;font-size:20px;color:var(--navy);letter-spacing:-.01em;margin:6px 0 5px;line-height:1.22}
+.gssub{font-size:14px;color:var(--muted);line-height:1.5;margin:0 0 18px}
+.gstrack{display:flex;align-items:flex-start;justify-content:space-between;margin:0 0 18px;padding:0 4px}
+.gstep{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;width:62px;text-align:center}
+.gsnum{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;background:#EEF1F7;color:var(--muted)}
+.gslabel{font-size:11px;font-weight:600;color:var(--muted);line-height:1.2}
+.gstep.now .gsnum{background:var(--navy);color:#fff}
+.gstep.now .gslabel{color:var(--navy)}
+.gstep.done .gsnum{background:var(--teal);color:#fff}
+.gstep.done .gslabel{color:var(--ink)}
+.gsbar{flex:1 1 auto;height:2px;background:var(--hair);margin-top:14px}
+.gscta{margin:0}
+
+/* sample-data link under the getting-started CTA */
+.gsdemo{display:block;width:100%;background:none;border:0;margin:10px 0 0;padding:8px;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;text-align:center}
+.gsdemo:hover{color:var(--navy);text-decoration:underline}
+
+/* ============ Accessibility ============ */
+:root{ --focus:#2D6CDF; }
+/* Visible keyboard focus (only for keyboard users, not mouse clicks) */
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,
+.row:focus-visible,.prow:focus-visible,.chip:focus-visible,.swatch:focus-visible,.addtile:focus-visible,
+.rowbtn:focus-visible,.iconbtn:focus-visible,.ministep:focus-visible,.back:focus-visible,[tabindex]:focus-visible{
+  outline:3px solid var(--focus); outline-offset:2px;
+}
+input.f:focus-visible,textarea.f:focus-visible,.selectpill select:focus-visible{ outline:3px solid var(--focus); outline-offset:1px; }
+/* Comfortable touch targets for icon-only controls */
+.iconbtn{min-width:40px;min-height:40px}
+/* Respect reduced-motion across the board */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}
+}

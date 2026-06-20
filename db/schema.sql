@@ -3,12 +3,36 @@
 -- Every row carries user_id so authorization is a single, simple check on every query.
 
 CREATE TABLE IF NOT EXISTS users (
-  id             SERIAL PRIMARY KEY,
-  email          TEXT UNIQUE NOT NULL,
-  password_hash  TEXT NOT NULL,
-  name           TEXT DEFAULT '',
-  email_verified BOOLEAN NOT NULL DEFAULT false,
-  created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
+  id               SERIAL PRIMARY KEY,
+  email            TEXT UNIQUE NOT NULL,
+  password_hash    TEXT NOT NULL,
+  name             TEXT DEFAULT '',
+  email_verified   BOOLEAN NOT NULL DEFAULT false,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_accessed_at TIMESTAMPTZ
+);
+
+-- Minimal record kept AFTER an account is hard-deleted, for security/abuse-prevention
+-- and to evidence that deletion requests were honoured. Holds no data beyond the email
+-- and the lifecycle dates. Disclosed in the privacy policy.
+CREATE TABLE IF NOT EXISTS deletion_log (
+  id               SERIAL PRIMARY KEY,
+  email            TEXT NOT NULL,
+  email_hash       TEXT NOT NULL,
+  role             TEXT,
+  created_at       TIMESTAMPTZ,
+  last_accessed_at TIMESTAMPTZ,
+  deleted_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- User feedback & suggestions.
+CREATE TABLE IF NOT EXISTS feedback (
+  id         SERIAL PRIMARY KEY,
+  user_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  email      TEXT,
+  kind       TEXT NOT NULL DEFAULT 'feedback',
+  message    TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- A household owns the data. Up to two members: one 'admin', one 'associate'.
@@ -45,6 +69,7 @@ CREATE TABLE IF NOT EXISTS children (
   household_id INTEGER REFERENCES households(id) ON DELETE CASCADE,
   user_id      INTEGER REFERENCES users(id) ON DELETE SET NULL,
   name       TEXT NOT NULL,
+  is_demo    BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -67,11 +92,13 @@ CREATE TABLE IF NOT EXISTS people (
   name           TEXT NOT NULL,
   role           TEXT NOT NULL DEFAULT '',
   parents        TEXT NOT NULL DEFAULT '',
+  parents_list   TEXT NOT NULL DEFAULT '',
   hooks          TEXT NOT NULL DEFAULT '',
   birthday       TEXT NOT NULL DEFAULT '',
   birthday_month INTEGER,
   birthday_day   INTEGER,
   avatar         TEXT NOT NULL DEFAULT '',
+  ptype          TEXT NOT NULL DEFAULT '',
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

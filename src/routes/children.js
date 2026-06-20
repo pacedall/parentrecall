@@ -10,11 +10,11 @@ router.use(loadHousehold);
 // GET /api/children  -> household's children with club counts (both roles)
 router.get('/', async (req, res) => {
   const { rows } = await db.query(
-    `SELECT c.id, c.name, COUNT(cl.id)::int AS club_count
+    `SELECT c.id, c.name, c.is_demo, COUNT(cl.id)::int AS club_count
      FROM children c
      LEFT JOIN clubs cl ON cl.child_id = c.id
      WHERE c.household_id = $1
-     GROUP BY c.id, c.name, c.created_at
+     GROUP BY c.id, c.name, c.is_demo, c.created_at
      ORDER BY c.created_at ASC, c.id ASC`,
     [req.householdId]
   );

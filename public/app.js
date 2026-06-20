@@ -23,7 +23,7 @@
 
   function silhouette(c) {
     return '<span class="silhouette" style="background:' + c + '24">' +
-      '<svg viewBox="0 0 24 24" fill="' + c + '"><circle cx="12" cy="8.2" r="4.2"/>' +
+      '<svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="' + c + '"><circle cx="12" cy="8.2" r="4.2"/>' +
       '<path d="M3.5 22c0-4.7 3.8-7.6 8.5-7.6s8.5 2.9 8.5 7.6z"/></svg></span>';
   }
 
@@ -36,6 +36,20 @@
   var GLASSLABEL = { none: 'None', round: 'Round', square: 'Square' };
   var ACC = ['none', 'hearingaid'];
   var ACCLABEL = { none: 'None', hearingaid: 'Hearing aid' };
+  var PTYPE_LABEL = { child: 'Child', parent: 'Parent/Carer', teacher: 'Teacher', instructor: 'Instructor', coach: 'Coach', assistant: 'Assistant', other: 'Other' };
+  function ptypeTag(p) { var t = p && p.ptype; return (t && PTYPE_LABEL[t]) ? '<span class="ptag">' + PTYPE_LABEL[t] + '</span>' : ''; }
+  function parentsHtml(p) {
+    if (p && p.parents_list) {
+      try {
+        var arr = JSON.parse(p.parents_list);
+        if (arr && arr.length) {
+          var L = { mother: 'Mother', father: 'Father', other: 'Other' };
+          return arr.map(function (e) { return '<div class="prow2"><span class="plabel">' + (L[e.label] || 'Carer') + '</span>' + esc(e.name) + '</div>'; }).join('');
+        }
+      } catch (e) {}
+    }
+    return esc((p && p.parents) || '');
+  }
 
   function hairBack(style, hc) {
     if (style === 'hijab') return '<path d="M20,50 C18,18 82,18 80,50 C80,75 70,90 50,90 C30,90 20,75 20,50 Z" fill="' + hc + '"/>';
@@ -77,7 +91,7 @@
       '<circle cx="43" cy="50.5" r="2.4" fill="#3A3030"/><circle cx="57" cy="50.5" r="2.4" fill="#3A3030"/>' +
       '<path d="M45,60 Q50,64 55,60" fill="none" stroke="#B57B58" stroke-width="2" stroke-linecap="round"/>' +
       hairFront(hair, hc) + glassesSVG(glasses);
-    return '<svg viewBox="0 0 100 100" width="' + size + '" height="' + size + '" style="display:block" xmlns="http://www.w3.org/2000/svg">' +
+    return '<svg aria-hidden="true" focusable="false" viewBox="0 0 100 100" width="' + size + '" height="' + size + '" style="display:block" xmlns="http://www.w3.org/2000/svg">' +
       '<defs><clipPath id="' + id + '"><circle cx="50" cy="50" r="50"/></clipPath></defs>' +
       '<g clip-path="url(#' + id + ')">' + inner + '</g></svg>';
   }
@@ -90,17 +104,17 @@
     return silhouette(color);
   }
   var ICON = {
-    chev: '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
-    back: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>',
-    plus: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
-    down: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
-    cake: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 21h16M5 21v-7h14v7M8 14V8m4 6V7m4 7V8M12 7V3"/></svg>',
-    edit: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
-    gear: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
-    sheet: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
-    search: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
-    cards: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="16" rx="2"/><path d="M7 5V3h14v16h-2"/></svg>',
-    print: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>'
+    chev: '<svg aria-hidden="true" focusable="false" class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
+    back: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>',
+    plus: '<svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    down: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
+    cake: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 21h16M5 21v-7h14v7M8 14V8m4 6V7m4 7V8M12 7V3"/></svg>',
+    edit: '<svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    gear: '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    sheet: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>',
+    search: '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+    cards: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="16" rx="2"/><path d="M7 5V3h14v16h-2"/></svg>',
+    print: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2M6 14h12v7H6z"/></svg>'
   };
 
   /* ---------------- API ---------------- */
@@ -203,6 +217,7 @@
 
         '<footer class="lfoot">' +
           '<span class="wordmark">Parent<span>Recall</span></span>' +
+          '<div class="lfootlinks"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/delete-account">Delete account</a><a href="#" id="lFeedback">Feedback</a><a href="mailto:team@parentrecall.com">Contact</a></div>' +
           '<p>A Pacedall Labs product. \u00a9 2026.</p>' +
         '</footer>' +
       '</div>';
@@ -214,7 +229,17 @@
     el('lNavLogin').onclick = login;
     el('lLogin').onclick = login;
     el('lLogin2').onclick = login;
+    var lfb = el('lFeedback'); if (lfb) lfb.onclick = function (e) { e.preventDefault(); sheetFeedback(); };
     window.scrollTo(0, 0);
+  }
+
+  // structural mirror of the server policy (the common-password screen is server-side)
+  function clientPwError(pw) {
+    if (pw.length < 8) return 'Password must be at least 8 characters.';
+    if (!/[A-Za-z]/.test(pw)) return 'Password must include at least one letter.';
+    if (!/[0-9]/.test(pw)) return 'Password must include at least one number.';
+    if ((pw.match(/[^A-Za-z0-9]/g) || []).length < 2) return 'Password must include at least two symbols (e.g. ! ? # $ @).';
+    return null;
   }
 
   function renderAuth(mode, errMsg) {
@@ -234,9 +259,11 @@
           '<label>Email</label>' +
           '<input class="f" id="a_email" type="email" placeholder="you@example.com" autocomplete="email"/>' +
           '<label>Password</label>' +
-          '<input class="f" id="a_pass" type="password" placeholder="' + (isLogin ? 'Your password' : 'At least 8 characters') + '" autocomplete="' + (isLogin ? 'current-password' : 'new-password') + '"/>' +
+          '<input class="f" id="a_pass" type="password" placeholder="' + (isLogin ? 'Your password' : '8+ characters') + '" autocomplete="' + (isLogin ? 'current-password' : 'new-password') + '"/>' +
+          (isLogin ? '' : '<p class="hint pwreq">Use 8 or more characters, with letters, at least one number, and at least two symbols.</p>') +
           '<button class="save" id="authBtn" type="submit">' + (isLogin ? 'Sign in' : 'Create account') + '</button>' +
         '</form>' +
+        (isLogin ? '' : '<p class="agree">By creating an account you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>') +
         (isLogin ? '<div class="toggle" style="margin-top:14px"><button id="forgotLink" type="button">Forgot password?</button></div>' : '') +
         '<div class="toggle">' + (isLogin ? "New here? " : 'Already have an account? ') +
           '<button id="authToggle" type="button">' + (isLogin ? 'Create an account' : 'Sign in') + '</button>' +
@@ -253,6 +280,7 @@
       var email = el('a_email').value.trim();
       var pass = el('a_pass').value;
       var name = isLogin ? '' : (el('a_name') ? el('a_name').value.trim() : '');
+      if (!isLogin) { var pe = clientPwError(pass); if (pe) { renderAuth(mode, pe); return; } }
       btn.disabled = true; btn.textContent = 'Please wait…';
       api(isLogin ? '/auth/login' : '/auth/register', { method: 'POST', body: { email: email, password: pass, name: name } })
         .then(function (data) {
@@ -318,7 +346,8 @@
         (errMsg ? '<div class="err">' + esc(errMsg) + '</div>' : '') +
         '<form id="resetForm">' +
           '<label>New password</label>' +
-          '<input class="f" id="rp_pass" type="password" placeholder="At least 8 characters" autocomplete="new-password"/>' +
+          '<input class="f" id="rp_pass" type="password" placeholder="8+ characters" autocomplete="new-password"/>' +
+          '<p class="hint pwreq">Use 8 or more characters, with letters, at least one number, and at least two symbols.</p>' +
           '<button class="save" id="rpBtn" type="submit">Update password</button>' +
         '</form>' +
         '<div class="toggle"><button id="rpBack" type="button">Back to sign in</button></div>' +
@@ -327,7 +356,8 @@
     el('resetForm').onsubmit = function (e) {
       e.preventDefault();
       var btn = el('rpBtn'); var pass = el('rp_pass').value;
-      if (pass.length < 8) { renderReset(resetToken, 'Password must be at least 8 characters.'); return; }
+      var pe = clientPwError(pass);
+      if (pe) { renderReset(resetToken, pe); return; }
       btn.disabled = true; btn.textContent = 'Updating…';
       api('/auth/reset', { method: 'POST', body: { token: resetToken, password: pass } })
         .then(function () { renderAuth('login'); toast('Password updated — please sign in.'); })
@@ -381,6 +411,35 @@
   function clubById(id) { return clubs.find(function (c) { return c.id === id; }); }
   function personById(id) { return people.find(function (p) { return p.id === id; }); }
 
+  function hasDemo() { return children.some(function (c) { return c.is_demo; }); }
+  function seedDemo() { return api('/demo/seed', { method: 'POST' }).then(function () { boot(); }).catch(function (e) { alert(e.message); }); }
+  function clearDemo() { return api('/demo/clear', { method: 'POST' }).then(function () { boot(); }).catch(function (e) { alert(e.message); }); }
+
+  // First-run guidance: a 3-step "getting started" card shown until the user
+  // has added their first person. Step 1 = child, 2 = clubs, 3 = people.
+  function gettingStarted(step, ctx) {
+    var labels = ['Add a child', 'Add clubs', 'Add people'];
+    var head = {
+      1: { h: 'Welcome' + (me && me.name ? ', ' + esc(me.name) : '') + ' \u2014 let\u2019s set you up', p: 'ParentRecall remembers the people around your child, so you don\u2019t have to. Three quick steps and you\u2019re away.', cta: 'Add your first child' },
+      2: { h: 'Nice \u2014 now add a class or club', p: 'Add ' + (ctx ? esc(ctx) + '\u2019s' : 'their') + ' class, swimming, football \u2014 any group where you need to remember people.', cta: 'Add a club or class' },
+      3: { h: 'Last step \u2014 add someone to remember', p: 'A first name is all you need. Build a quick cartoon face, and add the little details whenever they come back to you.', cta: 'Add the first person' }
+    }[step];
+    var track = '<div class="gstrack">' + labels.map(function (label, idx) {
+      var n = idx + 1;
+      var cls = n < step ? ' done' : (n === step ? ' now' : '');
+      var inner = n < step ? '\u2713' : String(n);
+      return '<div class="gstep' + cls + '"><span class="gsnum">' + inner + '</span><span class="gslabel">' + label + '</span></div>';
+    }).join('<span class="gsbar"></span>') + '</div>';
+    return '<div class="getstarted">' +
+      '<div class="gseyebrow">Getting started</div>' +
+      '<div class="gshead">' + head.h + '</div>' +
+      '<p class="gssub">' + head.p + '</p>' +
+      track +
+      '<button class="save gscta" id="gsCta">' + head.cta + '</button>' +
+      (step === 1 ? '<button class="gsdemo" id="gsDemo">Or explore with sample data first</button>' : '') +
+    '</div>';
+  }
+
   function renderHome() {
     var child = childById(state.childId) || children[0];
     var admin = isAdmin();
@@ -391,10 +450,10 @@
     var rows;
     if (!children.length) {
       rows = admin
-        ? '<div class="empty"><div class="big">Let\u2019s add your first child</div><p>Add a child, then the clubs and classes you need to remember people from.</p></div>'
+        ? gettingStarted(1)
         : '<div class="empty"><div class="big">Nothing here yet</div><p>Your account admin hasn\u2019t added a child yet. Once they do, their clubs and people will appear here for you too.</p></div>';
     } else if (!clubs.length) {
-      rows = '<div class="empty"><div class="big">No clubs yet for ' + esc(child.name) + '</div><p>Add their class, swimming, football \u2014 whatever groups you need to remember people from.</p></div>';
+      rows = gettingStarted(2, child.name);
     } else {
       rows = clubs.map(function (c) {
         return '<button class="row" data-club="' + c.id + '">' +
@@ -427,7 +486,7 @@
       banner +
       (children.length ?
         '<div class="pick"><div class="lbl">Whose groups?</div><div class="selectpill">' +
-          '<select id="childSel">' + opts + '</select>' +
+          '<select id="childSel" aria-label="Choose which child’s groups to view">' + opts + '</select>' +
           '<span class="av">' + ICON.down + '</span></div>' +
           (admin ? '<button class="ministep" id="editChild">' + ICON.edit + 'Rename or remove ' + esc(child.name) + '</button>' : '') +
         '</div>' : '') +
@@ -441,10 +500,10 @@
     var rows = people.length
       ? people.map(function (p) {
           return '<button class="prow" data-person="' + p.id + '">' + avatarFor(p, raw(c.color), 46) +
-            '<span class="meta"><span class="nm">' + esc(p.name) + (p.birthday ? '<span class="bdaydot"></span>' : '') + '</span>' +
+            '<span class="meta"><span class="nm">' + esc(p.name) + ptypeTag(p) + (p.birthday ? '<span class="bdaydot"></span>' : '') + '</span>' +
             '<span class="who">' + esc(p.role || 'Tap to add details') + '</span></span>' + ICON.chev + '</button>';
         }).join('')
-      : '<div class="empty"><div class="big">No one here yet</div><p>Add the first name. A first name is all you need \u2014 fill in the rest whenever it comes back to you.</p></div>';
+      : gettingStarted(3);
 
     return '<div class="topbar"><button class="back" id="back">' + ICON.back + esc(child.name) + '</button>' +
         '<button class="iconbtn" id="editClub" aria-label="Edit club">' + ICON.edit + '</button></div>' +
@@ -467,11 +526,12 @@
         '<span class="wordmark-sm">Parent<span>Recall</span></span></div>' +
       '<div class="profile"><div class="phead">' + avatarFor(p, raw(c.color), 92) +
         '<h2>' + esc(p.name) + '</h2>' +
+        (p.ptype ? '<div>' + ptypeTag(p) + '</div>' : '') +
         (p.role ? '<div class="role">' + esc(p.role) + '</div>' : '') +
         '<span class="pin" style="background:' + raw(c.color) + '">' + esc(c.name) + '</span></div>' +
       '<div class="pcardx"><div class="h">What jogs your memory</div><div class="b">' +
         (p.hooks ? esc(p.hooks) : 'Nothing yet \u2014 tap Edit to add the little details (the car, the job, where they sit) that bring the name back.') + '</div></div>' +
-      (p.parents ? '<div class="pcardx muted"><div class="h">Parents / carers</div><div class="b">' + esc(p.parents) + '</div></div>' : '') +
+      ((p.parents_list || p.parents) ? '<div class="pcardx muted"><div class="h">Parents / carers</div><div class="b">' + parentsHtml(p) + '</div></div>' : '') +
       (p.birthday ? '<div class="bchip"><span class="ic">' + ICON.cake + '</span>Birthday · ' + esc(p.birthday) + '</div>' : '') +
       '<div class="profile-actions"><button class="btn-edit" id="editPerson">Edit details</button>' +
         '<button class="btn-del" id="delPerson">Delete</button></div>' +
@@ -486,7 +546,7 @@
         '<span class="wordmark-sm">Parent<span>Recall</span></span></div>' +
       '<div class="findbar"><div class="findinput">' +
         ICON.search +
-        '<input id="findInput" placeholder="Find anyone \u2014 a name or a detail\u2026" autocomplete="off" autofocus/>' +
+        '<input id="findInput" aria-label="Find anyone by name or a detail" placeholder="Find anyone \u2014 a name or a detail\u2026" autocomplete="off" autofocus/>' +
       '</div></div>' +
       '<div id="findResults" class="results"></div>';
   }
@@ -623,6 +683,21 @@
     // initial avatar config
     var cfg = { skin: SKIN[2], hairColor: HAIRCOL[1], hair: 'short', glasses: 'none', acc: 'none' };
     if (p && p.avatar) { try { var saved = JSON.parse(p.avatar); cfg.skin = saved.skin || cfg.skin; cfg.hairColor = saved.hairColor || cfg.hairColor; cfg.hair = saved.hair || cfg.hair; cfg.glasses = saved.glasses || cfg.glasses; cfg.acc = saved.acc || cfg.acc; } catch (e) {} }
+    var ptype = (p && p.ptype) || '';
+    var PTYPES = [['child', 'Child'], ['parent', 'Parent/Carer'], ['teacher', 'Teacher'], ['instructor', 'Instructor'], ['coach', 'Coach'], ['assistant', 'Assistant'], ['other', 'Other']];
+    var parentsInit = [];
+    if (p) {
+      if (p.parents_list) { try { parentsInit = JSON.parse(p.parents_list) || []; } catch (e) { parentsInit = []; } }
+      if (!parentsInit.length && p.parents) parentsInit = [{ name: p.parents, label: '' }]; // legacy free-text into row 1
+    }
+    function parentRow(idx) {
+      var e = parentsInit[idx] || { name: '', label: '' };
+      var opts = [['', 'Relationship\u2026'], ['mother', 'Mother'], ['father', 'Father'], ['other', 'Other']]
+        .map(function (o) { return '<option value="' + o[0] + '"' + (e.label === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
+      return '<div class="parentrow">' +
+        '<input class="f" id="f_par' + idx + '" placeholder="Name" value="' + attr(e.name || '') + '" autocomplete="off"/>' +
+        '<select class="f psel" id="f_parlabel' + idx + '">' + opts + '</select></div>';
+    }
 
     function swatches(list, key, kind) {
       return list.map(function (v) {
@@ -651,10 +726,14 @@
       '<div class="avlabel">Accessory</div><div class="chiprow" id="accRow">' + chips(ACC, 'acc', 'acc', ACCLABEL) + '</div>' +
       '<label>Name <span class="req">·required</span></label>' +
       '<input class="f" id="f_pname" placeholder="e.g. Oscar" value="' + (p ? attr(p.name) : '') + '" autocomplete="off"/>' +
+      '<div class="avlabel">Type <span class="opt" style="text-transform:none;letter-spacing:0">optional</span></div>' +
+      '<div class="chiprow" id="ptypeRow">' + PTYPES.map(function (o) {
+        return '<button type="button" class="chip' + (ptype === o[0] ? ' sel' : '') + '" data-ptype="' + o[0] + '">' + o[1] + '</button>';
+      }).join('') + '</div>' +
       '<label>Who are they? <span class="opt">optional</span></label>' +
       '<input class="f" id="f_role" placeholder="e.g. Charlotte\u2019s best friend / the coach" value="' + (p ? attr(p.role) : '') + '" autocomplete="off"/>' +
       '<label>Parents / carers <span class="opt">optional</span></label>' +
-      '<input class="f" id="f_parents" placeholder="e.g. Priya (mum), Dan (dad)" value="' + (p ? attr(p.parents) : '') + '" autocomplete="off"/>' +
+      parentRow(0) + parentRow(1) +
       '<label>What jogs your memory <span class="opt">optional</span></label>' +
       '<textarea class="f" id="f_hooks" rows="3" placeholder="Red Audi · always in running gear · sits front-left">' + (p ? esc(p.hooks) : '') + '</textarea>' +
       '<div class="chiprow hookchips" id="hookChips">' +
@@ -685,6 +764,16 @@
     pick('glassRow', 'glasses', 'glasses');
     pick('accRow', 'acc', 'acc');
 
+    // person type chips (tap again to clear)
+    Array.prototype.forEach.call(el('ptypeRow').querySelectorAll('[data-ptype]'), function (b) {
+      b.onclick = function () {
+        var v = b.getAttribute('data-ptype');
+        ptype = (ptype === v) ? '' : v;
+        Array.prototype.forEach.call(el('ptypeRow').children, function (x) { x.classList.remove('sel'); });
+        if (ptype) b.classList.add('sel');
+      };
+    });
+
     // hook prompt chips: insert a labelled line into the notes box
     Array.prototype.forEach.call(el('hookChips').querySelectorAll('[data-hook]'), function (b) {
       b.onclick = function () {
@@ -695,13 +784,19 @@
     });
 
     function buildBody() {
+      var parents = [];
+      [0, 1].forEach(function (idx) {
+        var nm = el('f_par' + idx).value.trim();
+        if (nm) parents.push({ name: nm, label: el('f_parlabel' + idx).value || 'other' });
+      });
       return {
         name: el('f_pname').value.trim(),
         role: el('f_role').value.trim(),
-        parents: el('f_parents').value.trim(),
+        parents_list: parents,
         hooks: el('f_hooks').value.trim(),
         birthday: el('f_bday').value.trim(),
-        avatar: JSON.stringify(cfg)
+        avatar: JSON.stringify(cfg),
+        ptype: ptype
       };
     }
 
@@ -835,6 +930,40 @@
     cancel.onclick = hide;
   }
 
+  function sheetFeedback() {
+    var kinds = [['feedback', 'Feedback'], ['suggestion', 'Suggestion'], ['bug', 'Bug']];
+    var kind = 'feedback';
+    var loggedIn = !!token;
+    el('sheet').innerHTML =
+      '<div class="grab"></div><h3>Send feedback</h3>' +
+      '<p class="lead">We read everything. Tell us what\u2019s working, what isn\u2019t, or what you\u2019d love to see next.</p>' +
+      '<div class="chiprow" id="fbKind">' + kinds.map(function (k) { return '<button type="button" class="chip' + (k[0] === 'feedback' ? ' sel' : '') + '" data-k="' + k[0] + '">' + k[1] + '</button>'; }).join('') + '</div>' +
+      '<label>Your message</label>' +
+      '<textarea class="f" id="f_fb" rows="5" placeholder="What\u2019s on your mind?"></textarea>' +
+      (loggedIn ? '' : '<label>Email <span class="opt">optional</span></label><input class="f" id="f_fbemail" type="email" placeholder="you@example.com \u2014 if you\u2019d like a reply" autocomplete="off"/>') +
+      '<button class="save" id="fbSend" disabled>Send</button>' +
+      '<button class="cancel" id="cancelBtn">Cancel</button>';
+    show();
+    el('cancelBtn').onclick = hide;
+    var ta = el('f_fb'), send = el('fbSend');
+    ta.addEventListener('input', function () { send.disabled = ta.value.trim().length < 2; });
+    Array.prototype.forEach.call(el('fbKind').querySelectorAll('[data-k]'), function (b) {
+      b.onclick = function () { kind = b.getAttribute('data-k'); Array.prototype.forEach.call(el('fbKind').children, function (x) { x.classList.remove('sel'); }); b.classList.add('sel'); };
+    });
+    send.onclick = function () {
+      var msg = ta.value.trim();
+      if (msg.length < 2) return;
+      send.disabled = true; send.textContent = 'Sending\u2026';
+      var body = { message: msg, kind: kind };
+      var emEl = el('f_fbemail');
+      if (emEl && emEl.value.trim()) body.email = emEl.value.trim();
+      api('/feedback', { method: 'POST', body: body })
+        .then(function () { hide(); toast('Thank you \u2014 your feedback is on its way.'); })
+        .catch(function (err) { send.disabled = false; send.textContent = 'Send'; alert(err.message); });
+    };
+    setTimeout(function () { ta.focus(); }, 60);
+  }
+
   function sheetAccount() {
     var admin = isAdmin();
     var roleLine = household.role
@@ -860,12 +989,22 @@
       (roleLine ? '<p class="rolenote">' + roleLine + '</p>' : '') +
       partnerBlock +
       (admin ? '<button class="rowbtn" id="acExport">Export my data (JSON)</button>' : '') +
+      (admin ? (hasDemo()
+        ? '<button class="rowbtn" id="acDemo">Remove sample data</button>'
+        : '<button class="rowbtn" id="acDemo">Load sample data</button>') : '') +
+      '<button class="rowbtn" id="acFeedback">Send feedback or a suggestion</button>' +
       '<button class="rowbtn" id="acSignout">Sign out</button>' +
       (admin ? '<button class="danger" id="acDelete">Delete this account</button>' : '') +
-      '<button class="cancel" id="cancelBtn">Close</button>';
+      '<button class="cancel" id="cancelBtn">Close</button>' +
+      '<p class="sheetlegal"><a href="/privacy" target="_blank" rel="noopener">Privacy</a> \u00b7 <a href="/terms" target="_blank" rel="noopener">Terms</a> \u00b7 <a href="/delete-account" target="_blank" rel="noopener">Delete account</a> \u00b7 <a href="mailto:team@parentrecall.com">Contact</a></p>';
     show();
     el('cancelBtn').onclick = hide;
     el('acSignout').onclick = function () { hide(); signOut(); };
+    el('acFeedback').onclick = sheetFeedback;
+    var acDemo = el('acDemo'); if (acDemo) acDemo.onclick = function () {
+      if (hasDemo()) { acDemo.disabled = true; acDemo.textContent = 'Removing\u2026'; hide(); clearDemo(); }
+      else { acDemo.disabled = true; acDemo.textContent = 'Loading\u2026'; hide(); seedDemo(); }
+    };
 
     var inviteBtn = el('acInvite');
     if (inviteBtn) inviteBtn.onclick = sheetInvitePartner;
@@ -1109,6 +1248,12 @@
     var addChildBtn = el('addChildBtn'); if (addChildBtn) addChildBtn.onclick = sheetChild;
     var addClub = el('addClub'); if (addClub) addClub.onclick = sheetClub;
     var addPerson = el('addPerson'); if (addPerson) addPerson.onclick = function () { sheetPerson(false); };
+    var gsCta = el('gsCta'); if (gsCta) gsCta.onclick = function () {
+      if (!children.length) return sheetChild();
+      if (!clubs.length) return sheetClub();
+      return sheetPerson(false);
+    };
+    var gsDemo = el('gsDemo'); if (gsDemo) gsDemo.onclick = function () { gsDemo.disabled = true; gsDemo.textContent = 'Loading sample data\u2026'; seedDemo(); };
     var editPerson = el('editPerson'); if (editPerson) editPerson.onclick = function () { sheetPerson(true); };
     var delPerson = el('delPerson'); if (delPerson) delPerson.onclick = function () {
       var p = personById(state.personId);

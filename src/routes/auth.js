@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const db = require('../db');
 const { sign, requireAuth, loadHousehold, requireAdmin } = require('../middleware/auth');
+const { validatePassword } = require('../password');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../mailer');
 
 const router = express.Router();
@@ -75,7 +76,8 @@ router.post('/register', authLimiter, async (req, res) => {
   const name = (req.body.name || '').trim();
 
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
-  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  const pwErr = validatePassword(password, email);
+  if (pwErr) return res.status(400).json({ error: pwErr });
 
   try {
     const hash = await bcrypt.hash(password, 12);
@@ -105,6 +107,7 @@ router.post('/login', authLimiter, async (req, res) => {
     const user = rows[0];
     const ok = user ? await bcrypt.compare(password, user.password_hash) : false;
     if (!ok) return res.status(401).json({ error: 'Email or password is incorrect.' });
+    db.query('UPDATE users SET last_accessed_at = now() WHERE id = $1', [user.id]).catch(function () {});
     return res.json({ token: sign(user.id), user: publicUser(user) });
   } catch (err) {
     console.error('login error', err);
@@ -116,6 +119,8 @@ router.post('/login', authLimiter, async (req, res) => {
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await db.query('SELECT id, email, name, email_verified FROM users WHERE id = $1', [req.userId]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found.' });
+  // refresh last-access at most once an hour to keep writes light
+  db.query("UPDATE users SET last_accessed_at = now() WHERE id = $1 AND (last_accessed_at IS NULL OR last_accessed_at < now() - interval '1 hour')", [req.userId]).catch(function () {});
 
   let household = { role: null, isAdmin: false, partner: null, adminEmail: null };
   const mem = await db.query('SELECT household_id, role FROM household_members WHERE user_id = $1', [req.userId]);
@@ -188,7 +193,8 @@ router.post('/forgot', authLimiter, async (req, res) => {
 router.post('/reset', authLimiter, async (req, res) => {
   const raw = req.body.token || '';
   const password = req.body.password || '';
-  if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  const pwErr = validatePassword(password);
+  if (pwErr) return res.status(400).json({ error: pwErr });
   try {
     const userId = await consumeToken(raw, 'reset');
     if (!userId) return res.status(400).json({ error: 'That reset link is invalid or has expired. Please request a new one.' });
@@ -232,11 +238,12 @@ router.get('/export', requireAuth, loadHousehold, requireAdmin, async (req, res)
 // DELETE /api/auth/account  — admin only: delete the whole household + both members
 router.delete('/account', requireAuth, loadHousehold, requireAdmin, async (req, res) => {
   try {
-    const members = await db.query('SELECT user_id FROM household_members WHERE household_id = $1', [req.householdId]);
+    const members = await db.query('SELECT user_id, role FROM household_members WHERE household_id = $1', [req.householdId]);
     // Deleting the household cascades children/clubs/people (household_id FK) and memberships.
     await db.query('DELETE FROM households WHERE id = $1', [req.householdId]);
-    // Then remove the member user accounts themselves.
+    // Record a minimal deletion entry, then hard-delete each member account.
     for (const m of members.rows) {
+      await logDeletion(m.user_id, m.role);
       await db.query('DELETE FROM users WHERE id = $1', [m.user_id]);
     }
     res.json({ ok: true });
@@ -278,6 +285,23 @@ router.post('/household/invite', authLimiter, requireAuth, loadHousehold, requir
   }
 });
 
+// Write a minimal post-deletion record (email + lifecycle dates). Best-effort:
+// a logging failure must never block the actual deletion.
+async function logDeletion(userId, role) {
+  try {
+    const u = await db.query('SELECT email, created_at, last_accessed_at FROM users WHERE id = $1', [userId]);
+    if (!u.rows[0]) return;
+    const email = String(u.rows[0].email || '');
+    const hash = crypto.createHash('sha256').update(email.toLowerCase()).digest('hex');
+    await db.query(
+      'INSERT INTO deletion_log (email, email_hash, role, created_at, last_accessed_at) VALUES ($1, $2, $3, $4, $5)',
+      [email, hash, role || null, u.rows[0].created_at, u.rows[0].last_accessed_at]
+    );
+  } catch (e) {
+    console.error('deletion_log write failed', e.message);
+  }
+}
+
 // Reassign a member's authored rows to another member, then remove them.
 async function detachMember(householdId, fromUserId, toUserId) {
   if (toUserId) {
@@ -285,7 +309,9 @@ async function detachMember(householdId, fromUserId, toUserId) {
     await db.query('UPDATE clubs SET user_id = $1 WHERE household_id = $2 AND user_id = $3', [toUserId, householdId, fromUserId]);
     await db.query('UPDATE people SET user_id = $1 WHERE household_id = $2 AND user_id = $3', [toUserId, householdId, fromUserId]);
   }
+  const r = await db.query('SELECT role FROM household_members WHERE household_id = $1 AND user_id = $2', [householdId, fromUserId]);
   await db.query('DELETE FROM household_members WHERE household_id = $1 AND user_id = $2', [householdId, fromUserId]);
+  await logDeletion(fromUserId, r.rows[0] ? r.rows[0].role : 'associate');
   await db.query('DELETE FROM users WHERE id = $1', [fromUserId]);
 }
 
@@ -312,6 +338,31 @@ router.post('/household/leave', requireAuth, loadHousehold, async (req, res) => 
   } catch (err) {
     console.error('leave error', err);
     return res.status(500).json({ error: 'Something went wrong.' });
+  }
+});
+
+// GET /api/auth/admin/deletion-log?key=ADMIN_KEY  — CSV of the deletion log.
+// Disabled unless ADMIN_KEY is set in the environment.
+router.get('/admin/deletion-log', async (req, res) => {
+  const key = process.env.ADMIN_KEY;
+  if (!key) return res.status(404).json({ error: 'Not found.' });
+  const given = String(req.query.key || req.headers['x-admin-key'] || '');
+  const a = Buffer.from(given);
+  const b = Buffer.from(String(key));
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return res.status(403).json({ error: 'Forbidden.' });
+  try {
+    const { rows } = await db.query('SELECT email, role, created_at, last_accessed_at, deleted_at FROM deletion_log ORDER BY deleted_at DESC');
+    const fmt = (d) => (d ? new Date(d).toISOString() : '');
+    const cell = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+    const csv = ['email,role,created,last_accessed,deleted']
+      .concat(rows.map((r) => [r.email, r.role, fmt(r.created_at), fmt(r.last_accessed_at), fmt(r.deleted_at)].map(cell).join(',')))
+      .join('\n');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="parentrecall-deletion-log.csv"');
+    res.send(csv);
+  } catch (err) {
+    console.error('deletion-log read error', err);
+    res.status(500).json({ error: 'Something went wrong.' });
   }
 });
 

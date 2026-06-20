@@ -34,6 +34,14 @@ async function migrate() {
     // ignore
   }
   try {
+    await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS last_accessed_at TIMESTAMPTZ');
+    await db.query("ALTER TABLE people ADD COLUMN IF NOT EXISTS ptype TEXT NOT NULL DEFAULT ''");
+    await db.query('ALTER TABLE children ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false');
+    await db.query("ALTER TABLE people ADD COLUMN IF NOT EXISTS parents_list TEXT NOT NULL DEFAULT ''");
+  } catch (e) {
+    // ignore
+  }
+  try {
     await backfillHouseholds();
   } catch (e) {
     console.error('household backfill skipped:', e.message);

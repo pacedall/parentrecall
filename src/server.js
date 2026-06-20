@@ -32,10 +32,19 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/children', require('./routes/children'));
 app.use('/api/clubs', require('./routes/clubs'));
 app.use('/api/people', require('./routes/people'));
+app.use('/api/feedback', require('./routes/feedback'));
+app.use('/api/demo', require('./routes/demo'));
 
 // Static frontend
 const publicDir = path.join(__dirname, '..', 'public');
 app.use(express.static(publicDir));
+
+// Clean URLs for the legal pages
+app.get('/privacy', (req, res) => res.sendFile(path.join(publicDir, 'privacy.html')));
+app.get('/terms', (req, res) => res.sendFile(path.join(publicDir, 'terms.html')));
+app.get('/delete-account', (req, res) => res.sendFile(path.join(publicDir, 'delete-account.html')));
+app.get('/data-deletion', (req, res) => res.sendFile(path.join(publicDir, 'delete-account.html')));
+
 app.get('*', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 
 const PORT = process.env.PORT || 3000;
