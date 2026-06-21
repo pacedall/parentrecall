@@ -3,7 +3,12 @@
   'use strict';
 
   var TOKEN_KEY = 'pr_token';
-  var token = localStorage.getItem(TOKEN_KEY) || null;
+  var token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY) || null;
+  function saveToken(t, persist) {
+    token = t;
+    if (persist === false) { try { sessionStorage.setItem(TOKEN_KEY, t); } catch (e) {} localStorage.removeItem(TOKEN_KEY); }
+    else { try { localStorage.setItem(TOKEN_KEY, t); } catch (e) {} sessionStorage.removeItem(TOKEN_KEY); }
+  }
   var me = null;
   var household = { role: null, isAdmin: false, partner: null, adminEmail: null };
 
@@ -28,14 +33,14 @@
   }
 
   /* ---------------- Avatars ---------------- */
-  var SKIN = ['#F8D5B5', '#F0C39C', '#E0A878', '#C68642', '#9C6B3F', '#6B4423'];
-  var HAIRCOL = ['#2B2520', '#5A3825', '#A65E2E', '#D7A94B', '#9AA0A6', '#7B5A3A'];
-  var HAIRSTYLE = ['none', 'short', 'curly', 'long', 'bun', 'afro', 'hijab'];
-  var HAIRLABEL = { none: 'Shaved', short: 'Short', curly: 'Curly', long: 'Long', bun: 'Bun', afro: 'Afro', hijab: 'Hijab' };
-  var GLASSES = ['none', 'round', 'square'];
-  var GLASSLABEL = { none: 'None', round: 'Round', square: 'Square' };
-  var ACC = ['none', 'hearingaid'];
-  var ACCLABEL = { none: 'None', hearingaid: 'Hearing aid' };
+  var SKIN = ['#FBD9B8', '#F4C7A0', '#E6AC80', '#CD9265', '#A6724C', '#7C5436'];
+  var HAIRCOL = ['#2C2622', '#4A3526', '#8A5A30', '#D7A94B', '#9AA0A6', '#B9402E'];
+  var HAIRSTYLE = ['short', 'long', 'curly', 'afro', 'bun', 'bald', 'hijab'];
+  var HAIRLABEL = { short: 'Short', long: 'Long', curly: 'Curly', afro: 'Afro', bun: 'Bun', bald: 'Bald', hijab: 'Hijab' };
+  var GLASSES = ['none', 'round', 'square', 'rectangle', 'cateye'];
+  var GLASSLABEL = { none: 'None', round: 'Round', square: 'Square', rectangle: 'Rectangle', cateye: 'Cat-eye' };
+  // soft tints of the brand palette (orange, blue, teal, amber, periwinkle, coral)
+  var BG = ['#F9CDA9', '#BFE3F2', '#B9E7E2', '#FBE6AE', '#CFD9F3', '#F8C6C0'];
   var PTYPE_LABEL = { child: 'Child', parent: 'Parent/Carer', teacher: 'Teacher', instructor: 'Instructor', coach: 'Coach', assistant: 'Assistant', other: 'Other' };
   function ptypeTag(p) { var t = p && p.ptype; return (t && PTYPE_LABEL[t]) ? '<span class="ptag">' + PTYPE_LABEL[t] + '</span>' : ''; }
   function parentsHtml(p) {
@@ -51,49 +56,75 @@
     return esc((p && p.parents) || '');
   }
 
+  function shade(hex, amt) {
+    var n = parseInt(hex.slice(1), 16), r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    function c(x) { return Math.max(0, Math.min(255, Math.round(x * (1 + amt)))); }
+    return '#' + ((1 << 24) + (c(r) << 16) + (c(g) << 8) + c(b)).toString(16).slice(1);
+  }
+  function deriveBg(cfg) {
+    var s = (cfg.skin || '') + (cfg.hairColor || '') + (cfg.hair || '') + (cfg.glasses || '');
+    var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+    return BG[h % BG.length];
+  }
+  function hairSheen() { return '<path d="M78,62 Q94,55 112,59" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity="0.2"/>'; }
+  function hairCap(hc) { return '<path d="M56,98 C54,56 80,48 100,48 C120,48 146,56 144,98 C136,72 120,66 100,66 C80,66 64,72 56,98 Z" fill="' + hc + '"/>' + hairSheen(); }
+  function circlesStr(arr, hc) { var s = ''; for (var i = 0; i < arr.length; i++) { s += '<circle cx="' + arr[i][0] + '" cy="' + arr[i][1] + '" r="' + arr[i][2] + '" fill="' + hc + '"/>'; } return s; }
   function hairBack(style, hc) {
-    if (style === 'hijab') return '<path d="M20,50 C18,18 82,18 80,50 C80,75 70,90 50,90 C30,90 20,75 20,50 Z" fill="' + hc + '"/>';
-    if (style === 'long') return '<path d="M24,48 C20,26 80,26 76,48 L77,82 C77,89 68,87 68,70 C68,58 63,52 50,52 C37,52 32,58 32,70 C32,87 23,89 23,82 Z" fill="' + hc + '"/>';
-    if (style === 'afro') return '<ellipse cx="50" cy="40" rx="31" ry="27" fill="' + hc + '"/>';
-    if (style === 'curly') {
-      return [[34, 33], [50, 28], [66, 33], [27, 47], [73, 47], [41, 29], [59, 29], [50, 40]]
-        .map(function (p) { return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="10.5" fill="' + hc + '"/>'; }).join('');
-    }
+    if (style === 'long') return '<path d="M52,60 C52,36 148,36 148,60 L150,152 C150,160 134,160 134,152 L134,100 C134,78 124,68 100,68 C76,68 66,78 66,100 L66,152 C66,160 50,160 50,152 Z" fill="' + hc + '"/>';
+    if (style === 'afro') return '<ellipse cx="100" cy="66" rx="48" ry="42" fill="' + hc + '"/>';
+    if (style === 'bun') return '<circle cx="100" cy="42" r="14" fill="' + hc + '"/>';
+    if (style === 'curly') return '<ellipse cx="100" cy="74" rx="46" ry="34" fill="' + hc + '"/>' + circlesStr([[64,52,15],[84,44,16],[100,42,16],[116,44,16],[136,52,15],[52,74,15],[148,74,15],[52,100,14],[148,100,14],[60,122,13],[140,122,13],[78,134,12],[122,134,12]], hc);
     return '';
   }
   function hairFront(style, hc) {
-    var cap = '<path d="M24,52 C28,12 72,12 76,52 C70,40 60,36 50,36 C40,36 30,40 24,52 Z" fill="' + hc + '"/>';
-    if (style === 'short' || style === 'long') return cap;
-    if (style === 'bun') return cap + '<circle cx="50" cy="21" r="8.5" fill="' + hc + '"/><rect x="45" y="27" width="10" height="7" rx="3.5" fill="' + hc + '"/>';
-    return '';
+    if (style === 'bald') return '';
+    if (style === 'afro') return '<path d="M56,96 C52,54 80,46 100,46 C120,46 148,54 144,96 C138,72 120,64 100,64 C80,64 62,72 56,96 Z" fill="' + hc + '"/>' + hairSheen();
+    if (style === 'curly') return '<ellipse cx="100" cy="72" rx="42" ry="28" fill="' + hc + '"/>' + circlesStr([[70,68,12],[86,62,12],[100,60,12],[114,62,12],[130,68,12]], hc);
+    if (style === 'hijab') return '<path fill-rule="evenodd" d="M100,40 C141,40 160,72 160,104 C160,150 140,180 100,186 C60,180 40,150 40,104 C40,72 59,40 100,40 Z M100,58 C123,58 137,76 137,100 C137,126 121,140 100,140 C79,140 63,126 63,100 C63,76 77,58 100,58 Z" fill="' + hc + '"/>';
+    return hairCap(hc);
   }
   function glassesSVG(kind) {
-    if (kind === 'round') return '<g fill="none" stroke="#2C2C34" stroke-width="2.3" stroke-linecap="round"><circle cx="42" cy="51" r="7"/><circle cx="58" cy="51" r="7"/><path d="M49,50 q1,-2.5 2,0"/><path d="M35,49 l-5,-1.5"/><path d="M65,49 l5,-1.5"/></g>';
-    if (kind === 'square') return '<g fill="none" stroke="#2C2C34" stroke-width="2.3" stroke-linecap="round"><rect x="35" y="45.5" width="13" height="11" rx="2.6"/><rect x="52" y="45.5" width="13" height="11" rx="2.6"/><path d="M48,50 q2,-2 4,0"/><path d="M35,49 l-5,-1.5"/><path d="M65,49 l5,-1.5"/></g>';
-    return '';
-  }
-  function accSVG(a, hair) {
-    if (a === 'hearingaid' && hair !== 'hijab') return '<path d="M75,46 q6,1 5,8 q-1,5 -6,3.5" fill="none" stroke="#9AA0A6" stroke-width="2.6" stroke-linecap="round"/><circle cx="76.5" cy="50" r="2.1" fill="#7C8590"/>';
+    var c = '#33373F';
+    if (kind === 'round') return '<g fill="none" stroke="' + c + '" stroke-width="3.4" stroke-linecap="round"><circle cx="82" cy="94" r="13"/><circle cx="118" cy="94" r="13"/><path d="M95,92 q5,-3 10,0"/><path d="M69,90 l-6,-2"/><path d="M131,90 l6,-2"/></g>';
+    if (kind === 'square') return '<g fill="none" stroke="' + c + '" stroke-width="3.4" stroke-linejoin="round"><rect x="69" y="83" width="26" height="22" rx="6"/><rect x="105" y="83" width="26" height="22" rx="6"/><path d="M95,90 q5,-3 10,0"/><path d="M69,88 l-6,-2"/><path d="M131,88 l6,-2"/></g>';
+    if (kind === 'rectangle') return '<g fill="none" stroke="' + c + '" stroke-width="3.4" stroke-linejoin="round"><rect x="66" y="86" width="28" height="17" rx="5"/><rect x="106" y="86" width="28" height="17" rx="5"/><path d="M94,90 q6,-2 12,0"/><path d="M66,89 l-5,-2"/><path d="M134,89 l5,-2"/></g>';
+    if (kind === 'cateye') return '<g fill="none" stroke="' + c + '" stroke-width="3.4" stroke-linejoin="round"><path d="M68,98 q-3,-14 14,-13 q12,1 12,9 q0,6 -10,7 q-14,2 -16,-3 Z"/><path d="M132,98 q3,-14 -14,-13 q-12,1 -12,9 q0,6 10,7 q14,2 16,-3 Z"/><path d="M95,90 q5,-2 10,0"/></g>';
     return '';
   }
   function buildAvatar(cfg, size) {
     cfg = cfg || {}; size = size || 48;
-    var skin = cfg.skin || SKIN[2], hc = cfg.hairColor || HAIRCOL[1], hair = cfg.hair || 'short', glasses = cfg.glasses || 'none', acc = cfg.acc || 'none';
-    var id = 'av' + Math.random().toString(36).slice(2, 8);
-    var ears = (hair === 'hijab') ? '' : '<circle cx="28" cy="52" r="4.5" fill="' + skin + '"/><circle cx="72" cy="52" r="4.5" fill="' + skin + '"/>';
-    var inner =
-      '<rect width="100" height="100" fill="#EAEEF6"/>' +
-      '<path d="M16,100 C16,80 31,72 50,72 C69,72 84,80 84,100 Z" fill="#CBD5E8"/>' +
-      '<rect x="44" y="62" width="12" height="14" rx="6" fill="' + skin + '"/>' +
+    var skin = cfg.skin || SKIN[1];
+    var hc = cfg.hairColor || HAIRCOL[1];
+    var hair = cfg.hair || 'short';
+    if (hair === 'none') hair = 'bald';
+    var glasses = cfg.glasses || 'none';
+    var bg = cfg.bg || deriveBg(cfg);
+    var id = 'a' + Math.random().toString(36).slice(2, 8);
+    var skTop = shade(skin, 0.05), skBot = shade(skin, -0.10), earc = shade(skin, -0.05), nose = shade(skin, -0.22), brow = shade(hc, -0.12);
+    var isHijab = (hair === 'hijab');
+    var ears = isHijab ? '' : '<ellipse cx="64" cy="100" rx="6" ry="8.5" fill="' + earc + '"/><ellipse cx="136" cy="100" rx="6" ry="8.5" fill="' + earc + '"/>';
+    return '<svg viewBox="0 0 200 200" width="' + size + '" height="' + size + '" style="display:block" xmlns="http://www.w3.org/2000/svg">' +
+      '<defs><linearGradient id="sk' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + skTop + '"/><stop offset="100%" stop-color="' + skBot + '"/></linearGradient>' +
+      '<clipPath id="c' + id + '"><circle cx="100" cy="100" r="100"/></clipPath></defs>' +
+      '<g clip-path="url(#c' + id + ')">' +
+      '<rect width="200" height="200" fill="' + bg + '"/>' +
+      '<circle cx="100" cy="100" r="98" fill="none" stroke="' + shade(bg, -0.12) + '" stroke-width="4"/>' +
+      '<g transform="translate(100,108) scale(1.3) translate(-100,-95)">' +
       hairBack(hair, hc) + ears +
-      '<ellipse cx="50" cy="50" rx="22" ry="25" fill="' + skin + '"/>' +
-      accSVG(acc, hair) +
-      '<circle cx="43" cy="50.5" r="2.4" fill="#3A3030"/><circle cx="57" cy="50.5" r="2.4" fill="#3A3030"/>' +
-      '<path d="M45,60 Q50,64 55,60" fill="none" stroke="#B57B58" stroke-width="2" stroke-linecap="round"/>' +
-      hairFront(hair, hc) + glassesSVG(glasses);
-    return '<svg aria-hidden="true" focusable="false" viewBox="0 0 100 100" width="' + size + '" height="' + size + '" style="display:block" xmlns="http://www.w3.org/2000/svg">' +
-      '<defs><clipPath id="' + id + '"><circle cx="50" cy="50" r="50"/></clipPath></defs>' +
-      '<g clip-path="url(#' + id + ')">' + inner + '</g></svg>';
+      '<path d="M60,96 C60,66 78,52 100,52 C122,52 140,66 140,96 C140,122 122,138 100,138 C78,138 60,122 60,96 Z" fill="url(#sk' + id + ')"/>' +
+      '<ellipse cx="86" cy="86" rx="22" ry="20" fill="#ffffff" opacity="0.12"/>' +
+      '<ellipse cx="76" cy="108" rx="9" ry="5.5" fill="#F4938A" opacity="0.4"/><ellipse cx="124" cy="108" rx="9" ry="5.5" fill="#F4938A" opacity="0.4"/>' +
+      '<path d="M72,82 Q82,77 92,81" fill="none" stroke="' + brow + '" stroke-width="3" stroke-linecap="round"/>' +
+      '<path d="M108,81 Q118,77 128,82" fill="none" stroke="' + brow + '" stroke-width="3" stroke-linecap="round"/>' +
+      '<ellipse cx="82" cy="94" rx="10" ry="10.5" fill="#fff"/><ellipse cx="118" cy="94" rx="10" ry="10.5" fill="#fff"/>' +
+      '<circle cx="83" cy="95" r="6.4" fill="#6B4F34"/><circle cx="117" cy="95" r="6.4" fill="#6B4F34"/>' +
+      '<circle cx="83" cy="95" r="3" fill="#241813"/><circle cx="117" cy="95" r="3" fill="#241813"/>' +
+      '<circle cx="80.5" cy="92" r="2.1" fill="#fff"/><circle cx="114.5" cy="92" r="2.1" fill="#fff"/>' +
+      '<path d="M97.5,104 q2.5,4 5,0" fill="none" stroke="' + nose + '" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<path d="M86,116 Q100,127 114,116" fill="none" stroke="#C56B5C" stroke-width="3.2" stroke-linecap="round"/>' +
+      '<path d="M93,121 Q100,124 107,121" fill="none" stroke="#C56B5C" stroke-width="2" stroke-linecap="round" opacity="0.5"/>' +
+      glassesSVG(glasses) + hairFront(hair, hc) +
+      '</g></g></svg>';
   }
   // avatar if the person has one, else the neutral coloured silhouette
   function avatarFor(p, color, size) {
@@ -146,7 +177,7 @@
       { skin: '#6B4423', hair: 'afro', hairColor: '#2B2520' },
       { skin: '#E0A878', hair: 'hijab', hairColor: '#0CA8A8' },
       { skin: '#F8D5B5', hair: 'long', hairColor: '#D7A94B' },
-      { skin: '#9C6B3F', hair: 'curly', hairColor: '#2B2520', acc: 'hearingaid' }
+      { skin: '#A6724C', hair: 'curly', hairColor: '#2C2622' }
     ].map(function (c) { return '<span class="av">' + buildAvatar(c, 62) + '</span>'; }).join('');
 
     function feature(bg, color, glyph, title, body) {
@@ -162,14 +193,16 @@
         '</header>' +
 
         '<section class="lhero">' +
+          '<span class="leyebrow">Built for parents, by parents</span>' +
           '<h1>Never blank on a name at the school gate again.</h1>' +
           '<p class="sub">ParentRecall is your private memory aid for your children\u2019s classmates, their parents, and the coaches \u2014 the names, the faces, and the little details that bring them back.</p>' +
           '<div class="lcta">' +
             '<button class="btn-primary" id="lGet">Get started \u2014 it\u2019s free</button>' +
             '<button class="btn-ghost" id="lLogin">I already have an account</button>' +
           '</div>' +
+          '<p class="lfree">Free to register and use \u2014 no card, no catch.</p>' +
           '<div class="lavatars">' + heroFaces + '</div>' +
-          '<p class="ltrust">Free \u00b7 Private by design \u00b7 No photos of children, ever</p>' +
+          '<p class="ltrust">Private by design \u00b7 No photos of children, ever</p>' +
         '</section>' +
 
         '<section class="lband"><div class="lwrap">' +
@@ -261,6 +294,7 @@
           '<label>Password</label>' +
           '<input class="f" id="a_pass" type="password" placeholder="' + (isLogin ? 'Your password' : '8+ characters') + '" autocomplete="' + (isLogin ? 'current-password' : 'new-password') + '"/>' +
           (isLogin ? '' : '<p class="hint pwreq">Use 8 or more characters, with letters, at least one number, and at least two symbols.</p>') +
+          (isLogin ? '<label class="keepme"><input type="checkbox" id="keepSignedIn" checked/><span>Keep me signed in on this device</span></label>' : '') +
           '<button class="save" id="authBtn" type="submit">' + (isLogin ? 'Sign in' : 'Create account') + '</button>' +
         '</form>' +
         (isLogin ? '' : '<p class="agree">By creating an account you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>') +
@@ -285,7 +319,8 @@
       api(isLogin ? '/auth/login' : '/auth/register', { method: 'POST', body: { email: email, password: pass, name: name } })
         .then(function (data) {
           token = data.token; me = data.user;
-          localStorage.setItem(TOKEN_KEY, token);
+          var keep = el('keepSignedIn');
+          saveToken(token, (isLogin && keep) ? keep.checked : true);
           boot();
         })
         .catch(function (err) { renderAuth(mode, err.message); });
@@ -296,6 +331,7 @@
   function signOut() {
     token = null; me = null;
     localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
     children = []; clubs = []; people = [];
     state = { view: 'home', childId: null, clubId: null, personId: null };
     renderLanding();
@@ -681,8 +717,8 @@
   function sheetPerson(edit) {
     var p = edit ? personById(state.personId) : null;
     // initial avatar config
-    var cfg = { skin: SKIN[2], hairColor: HAIRCOL[1], hair: 'short', glasses: 'none', acc: 'none' };
-    if (p && p.avatar) { try { var saved = JSON.parse(p.avatar); cfg.skin = saved.skin || cfg.skin; cfg.hairColor = saved.hairColor || cfg.hairColor; cfg.hair = saved.hair || cfg.hair; cfg.glasses = saved.glasses || cfg.glasses; cfg.acc = saved.acc || cfg.acc; } catch (e) {} }
+    var cfg = { skin: SKIN[1], hairColor: HAIRCOL[1], hair: 'short', glasses: 'none', bg: BG[Math.floor(Math.random() * BG.length)] };
+    if (p && p.avatar) { try { var saved = JSON.parse(p.avatar); cfg.skin = saved.skin || cfg.skin; cfg.hairColor = saved.hairColor || cfg.hairColor; cfg.hair = saved.hair || cfg.hair; cfg.glasses = saved.glasses || cfg.glasses; cfg.bg = saved.bg || deriveBg(cfg); if (cfg.hair === 'none') cfg.hair = 'bald'; } catch (e) {} }
     var ptype = (p && p.ptype) || '';
     var PTYPES = [['child', 'Child'], ['parent', 'Parent/Carer'], ['teacher', 'Teacher'], ['instructor', 'Instructor'], ['coach', 'Coach'], ['assistant', 'Assistant'], ['other', 'Other']];
     var parentsInit = [];
@@ -723,7 +759,7 @@
       '</div>' +
       '<div class="avlabel">Hair style</div><div class="chiprow" id="hairRow">' + chips(HAIRSTYLE, 'hair', 'hair', HAIRLABEL) + '</div>' +
       '<div class="avlabel">Glasses</div><div class="chiprow" id="glassRow">' + chips(GLASSES, 'glasses', 'glasses', GLASSLABEL) + '</div>' +
-      '<div class="avlabel">Accessory</div><div class="chiprow" id="accRow">' + chips(ACC, 'acc', 'acc', ACCLABEL) + '</div>' +
+      '<div class="avlabel">Background</div><div class="swatchrow" id="bgRow">' + swatches(BG, 'bg', 'bg') + '</div>' +
       '<label>Name <span class="req">·required</span></label>' +
       '<input class="f" id="f_pname" placeholder="e.g. Oscar" value="' + (p ? attr(p.name) : '') + '" autocomplete="off"/>' +
       '<div class="avlabel">Type <span class="opt" style="text-transform:none;letter-spacing:0">optional</span></div>' +
@@ -760,9 +796,9 @@
     }
     pick('skinRow', 'skin', 'skin');
     pick('hcRow', 'haircolor', 'hairColor');
+    pick('bgRow', 'bg', 'bg');
     pick('hairRow', 'hair', 'hair');
     pick('glassRow', 'glasses', 'glasses');
-    pick('accRow', 'acc', 'acc');
 
     // person type chips (tap again to clear)
     Array.prototype.forEach.call(el('ptypeRow').querySelectorAll('[data-ptype]'), function (b) {

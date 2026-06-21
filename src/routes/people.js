@@ -9,9 +9,8 @@ router.use(loadHousehold);
 
 const FIELDS = ['name', 'role', 'parents', 'hooks', 'birthday'];
 
-const HAIR_OK = ['none', 'short', 'curly', 'long', 'bun', 'afro', 'hijab'];
-const GLASSES_OK = ['none', 'round', 'square'];
-const ACC_OK = ['none', 'hearingaid'];
+const HAIR_OK = ['short', 'long', 'curly', 'afro', 'bun', 'bald', 'hijab', 'none'];
+const GLASSES_OK = ['none', 'round', 'square', 'rectangle', 'cateye'];
 const PTYPE_OK = ['', 'child', 'parent', 'teacher', 'instructor', 'coach', 'assistant', 'other'];
 function cleanPtype(v) { v = String(v || '').trim().toLowerCase(); return PTYPE_OK.indexOf(v) >= 0 ? v : ''; }
 
@@ -46,9 +45,9 @@ function sanitizeAvatar(val) {
   const out = {};
   if (typeof obj.skin === 'string' && HEX.test(obj.skin)) out.skin = obj.skin;
   if (typeof obj.hairColor === 'string' && HEX.test(obj.hairColor)) out.hairColor = obj.hairColor;
+  if (typeof obj.bg === 'string' && HEX.test(obj.bg)) out.bg = obj.bg;
   if (HAIR_OK.indexOf(obj.hair) >= 0) out.hair = obj.hair;
   if (GLASSES_OK.indexOf(obj.glasses) >= 0) out.glasses = obj.glasses;
-  if (ACC_OK.indexOf(obj.acc) >= 0) out.acc = obj.acc;
   return Object.keys(out).length ? JSON.stringify(out) : '';
 }
 

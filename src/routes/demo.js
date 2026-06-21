@@ -7,7 +7,7 @@ router.use(requireAuth, loadHousehold, requireAdmin);
 
 // Sample dataset. Surnames are already shortened to two letters to match how the
 // app stores real names, and avatars use the same shape the builder produces.
-const AV = (skin, hairColor, hair, glasses, acc) => JSON.stringify({ skin: skin, hairColor: hairColor, hair: hair, glasses: glasses, acc: acc });
+const AV = (skin, hairColor, hair, glasses) => JSON.stringify({ skin: skin, hairColor: hairColor, hair: hair, glasses: glasses });
 
 function birthdayParts(s) {
   const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
@@ -38,7 +38,7 @@ const CLUBS = [
       { name: 'Sofia Me', ptype: 'child', role: '', hooks: 'Always first in the pool \u00b7 purple goggles', birthday: '30 June',
         parents: [{ name: 'Elena Co', label: 'mother' }, { name: 'Maria Co', label: 'mother' }], av: AV('#F1C9A5', '#2C1B18', 'curly', 'none', 'none') },
       { name: 'Jacob Re', ptype: 'child', role: '', hooks: 'Lane 3 \u00b7 giggly \u00b7 wears a hearing aid', birthday: '',
-        parents: [{ name: 'Hannah Re', label: 'mother' }], av: AV('#FFE0BD', '#E6C36A', 'short', 'none', 'hearingaid') }
+        parents: [{ name: 'Hannah Re', label: 'mother' }], av: AV('#FBD9B8', '#9AA0A6', 'short', 'round') }
     ]
   }
 ];
