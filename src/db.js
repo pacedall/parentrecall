@@ -5,9 +5,12 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
-// Railway (and most managed Postgres) require SSL. Locally it's usually off.
-const useSSL = /railway|rlwy|amazonaws|render|supabase|heroku/i.test(process.env.DATABASE_URL)
-  || process.env.PGSSL === 'true';
+// Railway's PRIVATE network (*.railway.internal) does NOT support SSL — forcing it breaks every query.
+// Public/proxy hosts and other managed Postgres providers DO require SSL.
+const _dbUrl = process.env.DATABASE_URL || '';
+const _internal = /\.railway\.internal/i.test(_dbUrl);
+const useSSL = process.env.PGSSL === 'true'
+  || (!_internal && /rlwy\.net|\.proxy\.|amazonaws|render|supabase|heroku|\.railway\.app/i.test(_dbUrl));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
