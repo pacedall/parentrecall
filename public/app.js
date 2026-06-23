@@ -33,12 +33,16 @@
   }
 
   /* ---------------- Avatars ---------------- */
-  var SKIN = ['#FBD9B8', '#F4C7A0', '#E6AC80', '#CD9265', '#A6724C', '#7C5436'];
-  var HAIRCOL = ['#2C2622', '#4A3526', '#8A5A30', '#D7A94B', '#9AA0A6', '#B9402E'];
-  var HAIRSTYLE = ['short', 'long', 'curly', 'afro', 'bun', 'bald', 'hijab'];
-  var HAIRLABEL = { short: 'Short', long: 'Long', curly: 'Curly', afro: 'Afro', bun: 'Bun', bald: 'Bald', hijab: 'Hijab' };
-  var GLASSES = ['none', 'round', 'square', 'rectangle', 'cateye'];
-  var GLASSLABEL = { none: 'None', round: 'Round', square: 'Square', rectangle: 'Rectangle', cateye: 'Cat-eye' };
+  // Avataaars skin tones (hex from the avataaars palette)
+  var SKIN = ['#ffdbb4', '#edb98a', '#fd9841', '#d08b5b', '#ae5d29', '#614335'];
+  // Hair colours: black, dark brown, auburn, light brown, blonde, grey
+  var HAIRCOL = ['#2c1b18', '#4a312c', '#a55728', '#b58143', '#d6b370', '#e8e1e1'];
+  // Avataaars 'top' styles ('none' = bald); hijab + turban for inclusivity
+  var HAIRSTYLE = ['none', 'shortFlat', 'shortCurly', 'shortWaved', 'theCaesar', 'straight01', 'bob', 'bun', 'longButNotTooLong', 'curly', 'bigHair', 'dreads', 'fro', 'hijab', 'turban'];
+  var HAIRLABEL = { none: 'None', shortFlat: 'Short', shortCurly: 'Short curly', shortWaved: 'Short waved', theCaesar: 'Buzz', straight01: 'Straight', bob: 'Bob', bun: 'Bun', longButNotTooLong: 'Long', curly: 'Curly', bigHair: 'Big hair', dreads: 'Dreads', fro: 'Afro', hijab: 'Hijab', turban: 'Turban' };
+  // Avataaars accessories (glasses)
+  var GLASSES = ['none', 'round', 'prescription01', 'prescription02', 'wayfarers', 'sunglasses'];
+  var GLASSLABEL = { none: 'None', round: 'Round', prescription01: 'Glasses', prescription02: 'Glasses 2', wayfarers: 'Wayfarer', sunglasses: 'Sunglasses' };
   // soft tints of the brand palette (orange, blue, teal, amber, periwinkle, coral)
   var BG = ['#F9CDA9', '#BFE3F2', '#B9E7E2', '#FBE6AE', '#CFD9F3', '#F8C6C0'];
   var PTYPE_LABEL = { child: 'Child', parent: 'Parent/Carer', teacher: 'Teacher', instructor: 'Instructor', coach: 'Coach', assistant: 'Assistant', other: 'Other' };
@@ -66,65 +70,68 @@
     var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; }
     return BG[h % BG.length];
   }
-  function hairSheen() { return '<path d="M78,62 Q94,55 112,59" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity="0.2"/>'; }
-  function hairCap(hc) { return '<path d="M56,98 C54,56 80,48 100,48 C120,48 146,56 144,98 C136,72 120,66 100,66 C80,66 64,72 56,98 Z" fill="' + hc + '"/>' + hairSheen(); }
-  function circlesStr(arr, hc) { var s = ''; for (var i = 0; i < arr.length; i++) { s += '<circle cx="' + arr[i][0] + '" cy="' + arr[i][1] + '" r="' + arr[i][2] + '" fill="' + hc + '"/>'; } return s; }
-  function hairBack(style, hc) {
-    if (style === 'long') return '<path d="M52,60 C52,36 148,36 148,60 L150,152 C150,160 134,160 134,152 L134,100 C134,78 124,68 100,68 C76,68 66,78 66,100 L66,152 C66,160 50,160 50,152 Z" fill="' + hc + '"/>';
-    if (style === 'afro') return '<ellipse cx="100" cy="66" rx="48" ry="42" fill="' + hc + '"/>';
-    if (style === 'bun') return '<circle cx="100" cy="42" r="14" fill="' + hc + '"/>';
-    if (style === 'curly') return '<ellipse cx="100" cy="74" rx="46" ry="34" fill="' + hc + '"/>' + circlesStr([[64,52,15],[84,44,16],[100,42,16],[116,44,16],[136,52,15],[52,74,15],[148,74,15],[52,100,14],[148,100,14],[60,122,13],[140,122,13],[78,134,12],[122,134,12]], hc);
-    return '';
+  var _avCache = {};
+  function _strip(hex) { return String(hex || '').replace('#', ''); }
+  var AV_FRIENDLY = { eyes: ['default', 'happy'], eyebrows: ['default', 'defaultNatural'], mouth: ['smile', 'twinkle'] };
+  var OLD_SKIN = ['#FBD9B8', '#F4C7A0', '#E6AC80', '#CD9265', '#A6724C', '#7C5436'];
+  var OLD_HAIRCOL = ['#2C2622', '#4A3526', '#8A5A30', '#D7A94B', '#9AA0A6', '#B9402E'];
+  var HAIR_MIGRATE = { short: 'shortFlat', long: 'longButNotTooLong', curly: 'curly', afro: 'fro', bun: 'bun', bald: 'none', hijab: 'hijab' };
+  var GLASS_MIGRATE = { square: 'prescription01', rectangle: 'prescription02', cateye: 'wayfarers' };
+  function stableHash(cfg) { var s = (cfg.skin || '') + (cfg.hairColor || '') + (cfg.hair || '') + (cfg.glasses || '') + (cfg.bg || ''); var h = 0; for (var i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; } return h.toString(36); }
+  function normalizeAvatar(cfg) {
+    cfg = cfg || {};
+    var hair = cfg.hair; if (HAIR_MIGRATE[hair]) hair = HAIR_MIGRATE[hair];
+    if (hair !== 'none' && HAIRLABEL[hair] === undefined) hair = 'shortFlat';
+    var glasses = cfg.glasses; if (GLASS_MIGRATE[glasses]) glasses = GLASS_MIGRATE[glasses];
+    if (GLASSLABEL[glasses] === undefined) glasses = 'none';
+    var skin = cfg.skin; var si = OLD_SKIN.indexOf(skin); if (si >= 0) skin = SKIN[si];
+    var hcv = cfg.hairColor; var hi = OLD_HAIRCOL.indexOf(hcv); if (hi >= 0) hcv = HAIRCOL[hi];
+    return { seed: cfg.seed || ('s' + stableHash(cfg)), skin: skin || SKIN[1], hairColor: hcv || HAIRCOL[1], hair: hair || 'shortFlat', glasses: glasses || 'none', bg: cfg.bg || deriveBg(cfg) };
   }
-  function hairFront(style, hc) {
-    if (style === 'bald') return '';
-    if (style === 'afro') return '<path d="M56,96 C52,54 80,46 100,46 C120,46 148,54 144,96 C138,72 120,64 100,64 C80,64 62,72 56,96 Z" fill="' + hc + '"/>' + hairSheen();
-    if (style === 'curly') return '<ellipse cx="100" cy="72" rx="42" ry="28" fill="' + hc + '"/>' + circlesStr([[70,68,12],[86,62,12],[100,60,12],[114,62,12],[130,68,12]], hc);
-    if (style === 'hijab') return '<path fill-rule="evenodd" d="M100,40 C141,40 160,72 160,104 C160,150 140,180 100,186 C60,180 40,150 40,104 C40,72 59,40 100,40 Z M100,58 C123,58 137,76 137,100 C137,126 121,140 100,140 C79,140 63,126 63,100 C63,76 77,58 100,58 Z" fill="' + hc + '"/>';
-    return hairCap(hc);
-  }
-  function glassesSVG(kind) {
-    var c = '#33373F';
-    if (kind === 'round') return '<g fill="none" stroke="' + c + '" stroke-width="3.4" stroke-linecap="round"><circle cx="82" cy="94" r="13"/><circle cx="118" cy="94" r="13"/><path d="M95,92 q5,-3 10,0"/><path d="M69,90 l-6,-2"/><path d="M131,90 l6,-2"/></g>';
-    if (kind === 'square') return '<g fill="none" stroke="' + c + '" stroke-width="3.4" stroke-linejoin="round"><rect x="69" y="83" width="26" height="22" rx="6"/><rect x="105" y="83" width="26" height="22" rx="6"/><path d="M95,90 q5,-3 10,0"/><path d="M69,88 l-6,-2"/><path d="M131,88 l6,-2"/></g>';
-    if (kind === 'rectangle') return '<g fill="none" stroke="' + c + '" stroke-width="3.4" stroke-linejoin="round"><rect x="66" y="86" width="28" height="17" rx="5"/><rect x="106" y="86" width="28" height="17" rx="5"/><path d="M94,90 q6,-2 12,0"/><path d="M66,89 l-5,-2"/><path d="M134,89 l5,-2"/></g>';
-    if (kind === 'cateye') return '<g fill="none" stroke="' + c + '" stroke-width="3.4" stroke-linejoin="round"><path d="M68,98 q-3,-14 14,-13 q12,1 12,9 q0,6 -10,7 q-14,2 -16,-3 Z"/><path d="M132,98 q3,-14 -14,-13 q-12,1 -12,9 q0,6 10,7 q14,2 16,-3 Z"/><path d="M95,90 q5,-2 10,0"/></g>';
-    return '';
+  function newAvatar() {
+    function pk(a) { return a[Math.floor(Math.random() * a.length)]; }
+    var hairChoices = ['shortFlat', 'shortCurly', 'shortWaved', 'theCaesar', 'straight01', 'bob', 'bun', 'longButNotTooLong', 'curly', 'bigHair', 'dreads', 'fro'];
+    return { seed: Math.random().toString(36).slice(2, 10), skin: pk(SKIN), hairColor: pk(HAIRCOL), hair: pk(hairChoices), glasses: (Math.random() < 0.18 ? pk(['round', 'prescription01', 'prescription02', 'wayfarers']) : 'none'), bg: pk(BG) };
   }
   function buildAvatar(cfg, size) {
-    cfg = cfg || {}; size = size || 48;
-    var skin = cfg.skin || SKIN[1];
-    var hc = cfg.hairColor || HAIRCOL[1];
-    var hair = cfg.hair || 'short';
-    if (hair === 'none') hair = 'bald';
-    var glasses = cfg.glasses || 'none';
-    var bg = cfg.bg || deriveBg(cfg);
-    var id = 'a' + Math.random().toString(36).slice(2, 8);
-    var skTop = shade(skin, 0.05), skBot = shade(skin, -0.10), earc = shade(skin, -0.05), nose = shade(skin, -0.22), brow = shade(hc, -0.12);
-    var isHijab = (hair === 'hijab');
-    var ears = isHijab ? '' : '<ellipse cx="64" cy="100" rx="6" ry="8.5" fill="' + earc + '"/><ellipse cx="136" cy="100" rx="6" ry="8.5" fill="' + earc + '"/>';
+    cfg = normalizeAvatar(cfg); size = size || 48;
+    var bg = cfg.bg;
+    var key = JSON.stringify(cfg);
+    var inner = _avCache[key];
+    if (inner === undefined) {
+      inner = '';
+      try {
+        if (window.DiceBear && window.DiceBear.createAvatar && window.DiceBear.avataaars) {
+          var opt = {
+            seed: cfg.seed,
+            skinColor: [_strip(cfg.skin)],
+            hairColor: [_strip(cfg.hairColor)],
+            eyes: AV_FRIENDLY.eyes, eyebrows: AV_FRIENDLY.eyebrows, mouth: AV_FRIENDLY.mouth,
+            facialHairProbability: 0,
+            clothing: ['shirtCrewNeck'], clothesColor: ['e3e3e8'],
+            accessoriesProbability: 0
+          };
+          if (cfg.hair && cfg.hair !== 'none') opt.top = [cfg.hair];
+          else opt.topProbability = 0;
+          if (cfg.glasses && cfg.glasses !== 'none') { opt.accessories = [cfg.glasses]; opt.accessoriesProbability = 100; }
+          var rawSvg = window.DiceBear.createAvatar(window.DiceBear.avataaars, opt).toString();
+          inner = rawSvg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+        }
+      } catch (e) { inner = ''; }
+      _avCache[key] = inner;
+    }
+    var uid = 'v' + Math.random().toString(36).slice(2, 8);
+    var content = inner ? inner.replace(/viewboxMask/g, uid) : '';
+    var ring = shade(bg, -0.12);
+    var id = 'p' + Math.random().toString(36).slice(2, 8);
+    var headshot = content ? '<svg x="0" y="0" width="200" height="200" viewBox="44 2 192 192" preserveAspectRatio="xMidYMid slice">' + content + '</svg>' : '';
     return '<svg viewBox="0 0 200 200" width="' + size + '" height="' + size + '" style="display:block" xmlns="http://www.w3.org/2000/svg">' +
-      '<defs><linearGradient id="sk' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="' + skTop + '"/><stop offset="100%" stop-color="' + skBot + '"/></linearGradient>' +
-      '<clipPath id="c' + id + '"><circle cx="100" cy="100" r="100"/></clipPath></defs>' +
-      '<g clip-path="url(#c' + id + ')">' +
+      '<defs><clipPath id="' + id + '"><circle cx="100" cy="100" r="100"/></clipPath></defs>' +
+      '<g clip-path="url(#' + id + ')">' +
       '<rect width="200" height="200" fill="' + bg + '"/>' +
-      '<circle cx="100" cy="100" r="98" fill="none" stroke="' + shade(bg, -0.12) + '" stroke-width="4"/>' +
-      '<g transform="translate(100,108) scale(1.3) translate(-100,-95)">' +
-      hairBack(hair, hc) + ears +
-      '<path d="M60,96 C60,66 78,52 100,52 C122,52 140,66 140,96 C140,122 122,138 100,138 C78,138 60,122 60,96 Z" fill="url(#sk' + id + ')"/>' +
-      '<ellipse cx="86" cy="86" rx="22" ry="20" fill="#ffffff" opacity="0.12"/>' +
-      '<ellipse cx="76" cy="108" rx="9" ry="5.5" fill="#F4938A" opacity="0.4"/><ellipse cx="124" cy="108" rx="9" ry="5.5" fill="#F4938A" opacity="0.4"/>' +
-      '<path d="M72,82 Q82,77 92,81" fill="none" stroke="' + brow + '" stroke-width="3" stroke-linecap="round"/>' +
-      '<path d="M108,81 Q118,77 128,82" fill="none" stroke="' + brow + '" stroke-width="3" stroke-linecap="round"/>' +
-      '<ellipse cx="82" cy="94" rx="10" ry="10.5" fill="#fff"/><ellipse cx="118" cy="94" rx="10" ry="10.5" fill="#fff"/>' +
-      '<circle cx="83" cy="95" r="6.4" fill="#6B4F34"/><circle cx="117" cy="95" r="6.4" fill="#6B4F34"/>' +
-      '<circle cx="83" cy="95" r="3" fill="#241813"/><circle cx="117" cy="95" r="3" fill="#241813"/>' +
-      '<circle cx="80.5" cy="92" r="2.1" fill="#fff"/><circle cx="114.5" cy="92" r="2.1" fill="#fff"/>' +
-      '<path d="M97.5,104 q2.5,4 5,0" fill="none" stroke="' + nose + '" stroke-width="2.2" stroke-linecap="round"/>' +
-      '<path d="M86,116 Q100,127 114,116" fill="none" stroke="#C56B5C" stroke-width="3.2" stroke-linecap="round"/>' +
-      '<path d="M93,121 Q100,124 107,121" fill="none" stroke="#C56B5C" stroke-width="2" stroke-linecap="round" opacity="0.5"/>' +
-      glassesSVG(glasses) + hairFront(hair, hc) +
-      '</g></g></svg>';
+      headshot +
+      '<circle cx="100" cy="100" r="98" fill="none" stroke="' + ring + '" stroke-width="4"/>' +
+      '</g></svg>';
   }
   // avatar if the person has one, else the neutral coloured silhouette
   function avatarFor(p, color, size) {
@@ -138,7 +145,10 @@
     chev: '<svg aria-hidden="true" focusable="false" class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>',
     back: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>',
     plus: '<svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    eye: '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
+    eyeOff: '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/><path d="M9.4 5.2A9.5 9.5 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.2 6.2A17 17 0 0 0 2 12s3.5 7 10 7a9.5 9.5 0 0 0 3.6-.7"/></svg>',
     down: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
+    shuffle: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>',
     cake: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 21h16M5 21v-7h14v7M8 14V8m4 6V7m4 7V8M12 7V3"/></svg>',
     edit: '<svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     gear: '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
@@ -292,7 +302,7 @@
           '<label>Email</label>' +
           '<input class="f" id="a_email" type="email" placeholder="you@example.com" autocomplete="email"/>' +
           '<label>Password</label>' +
-          '<input class="f" id="a_pass" type="password" placeholder="' + (isLogin ? 'Your password' : '8+ characters') + '" autocomplete="' + (isLogin ? 'current-password' : 'new-password') + '"/>' +
+          '<div class="pwwrap"><input class="f" id="a_pass" type="password" placeholder="' + (isLogin ? 'Your password' : '8+ characters') + '" autocomplete="' + (isLogin ? 'current-password' : 'new-password') + '"/><button type="button" class="pweye" data-eye="a_pass" aria-label="Show password" tabindex="-1">' + ICON.eye + '</button></div>' +
           (isLogin ? '' : '<p class="hint pwreq">Use 8 or more characters, with letters, at least one number, and at least two symbols.</p>') +
           (isLogin ? '<label class="keepme"><input type="checkbox" id="keepSignedIn" checked/><span>Keep me signed in on this device</span></label>' : '') +
           '<button class="save" id="authBtn" type="submit">' + (isLogin ? 'Sign in' : 'Create account') + '</button>' +
@@ -382,7 +392,7 @@
         (errMsg ? '<div class="err">' + esc(errMsg) + '</div>' : '') +
         '<form id="resetForm">' +
           '<label>New password</label>' +
-          '<input class="f" id="rp_pass" type="password" placeholder="8+ characters" autocomplete="new-password"/>' +
+          '<div class="pwwrap"><input class="f" id="rp_pass" type="password" placeholder="8+ characters" autocomplete="new-password"/><button type="button" class="pweye" data-eye="rp_pass" aria-label="Show password" tabindex="-1">' + ICON.eye + '</button></div>' +
           '<p class="hint pwreq">Use 8 or more characters, with letters, at least one number, and at least two symbols.</p>' +
           '<button class="save" id="rpBtn" type="submit">Update password</button>' +
         '</form>' +
@@ -535,9 +545,10 @@
     var child = childById(c.child_id) || { name: 'Back' };
     var rows = people.length
       ? people.map(function (p) {
+          var sub = p.parents ? esc(p.parents) + (p.role ? ' \u00b7 ' + esc(p.role) : '') : esc(p.role || 'Tap to add details');
           return '<button class="prow" data-person="' + p.id + '">' + avatarFor(p, raw(c.color), 46) +
             '<span class="meta"><span class="nm">' + esc(p.name) + ptypeTag(p) + (p.birthday ? '<span class="bdaydot"></span>' : '') + '</span>' +
-            '<span class="who">' + esc(p.role || 'Tap to add details') + '</span></span>' + ICON.chev + '</button>';
+            '<span class="who">' + sub + '</span></span>' + ICON.chev + '</button>';
         }).join('')
       : gettingStarted(3);
 
@@ -545,9 +556,11 @@
         '<button class="iconbtn" id="editClub" aria-label="Edit club">' + ICON.edit + '</button></div>' +
       '<div class="title"><h2>' + esc(c.name) + '</h2><p>' + (c.sub ? esc(c.sub) + ' · ' : '') +
         people.length + ' ' + (people.length === 1 ? 'person' : 'people') + '</p></div>' +
+      (clubs.length > 1 ? '<div class="pick clubswitch"><div class="selectpill"><select id="clubSwitch" aria-label="Switch to another club or class">' +
+        clubs.map(function (k) { return '<option value="' + k.id + '"' + (k.id === c.id ? ' selected' : '') + '>' + esc(k.name) + (k.sub ? ' \u2014 ' + esc(k.sub) : '') + '</option>'; }).join('') +
+        '</select><span class="av">' + ICON.down + '</span></div></div>' : '') +
       '<div class="list">' + rows +
         '<button class="addtile" id="addPerson"><span class="pl">' + ICON.plus + '</span>Add someone</button>' +
-        (people.length >= 2 ? '<button class="ministep center" id="practiseBtn">' + ICON.cards + 'Practise these names' + '</button>' : '') +
         '<button class="ministep center" id="pasteList">' + ICON.plus + 'Paste a whole list at once</button>' +
         '<button class="ministep center" id="importList">' + ICON.sheet + 'Import from a spreadsheet</button>' +
         (people.length ? '<button class="ministep center" id="printBtn">' + ICON.print + 'Print / save as PDF' + '</button>' : '') +
@@ -717,8 +730,8 @@
   function sheetPerson(edit) {
     var p = edit ? personById(state.personId) : null;
     // initial avatar config
-    var cfg = { skin: SKIN[1], hairColor: HAIRCOL[1], hair: 'short', glasses: 'none', bg: BG[Math.floor(Math.random() * BG.length)] };
-    if (p && p.avatar) { try { var saved = JSON.parse(p.avatar); cfg.skin = saved.skin || cfg.skin; cfg.hairColor = saved.hairColor || cfg.hairColor; cfg.hair = saved.hair || cfg.hair; cfg.glasses = saved.glasses || cfg.glasses; cfg.bg = saved.bg || deriveBg(cfg); if (cfg.hair === 'none') cfg.hair = 'bald'; } catch (e) {} }
+    var cfg = newAvatar();
+    if (p && p.avatar) { try { cfg = normalizeAvatar(JSON.parse(p.avatar)); } catch (e) {} }
     var ptype = (p && p.ptype) || '';
     var PTYPES = [['child', 'Child'], ['parent', 'Parent/Carer'], ['teacher', 'Teacher'], ['instructor', 'Instructor'], ['coach', 'Coach'], ['assistant', 'Assistant'], ['other', 'Other']];
     var parentsInit = [];
@@ -751,7 +764,8 @@
     el('sheet').innerHTML =
       '<div class="grab"></div><h3>' + (edit ? 'Edit details' : 'Add someone') + '</h3>' +
       '<div class="avbuilder">' +
-        '<span class="avpreview" id="avPreview">' + buildAvatar(cfg, 76) + '</span>' +
+        '<div class="avpreviewwrap"><span class="avpreview" id="avPreview">' + buildAvatar(cfg, 76) + '</span>' +
+        '<button type="button" class="shuffle" id="avShuffle">' + ICON.shuffle + 'Shuffle</button></div>' +
         '<div class="avcontrols">' +
           '<div class="avlabel">Skin</div><div class="swatchrow" id="skinRow">' + swatches(SKIN, 'skin', 'skin') + '</div>' +
           '<div class="avlabel">Hair colour</div><div class="swatchrow" id="hcRow">' + swatches(HAIRCOL, 'hairColor', 'haircolor') + '</div>' +
@@ -799,6 +813,16 @@
     pick('bgRow', 'bg', 'bg');
     pick('hairRow', 'hair', 'hair');
     pick('glassRow', 'glasses', 'glasses');
+    function applySel() {
+      [['skinRow', 'skin', 'skin'], ['hcRow', 'haircolor', 'hairColor'], ['bgRow', 'bg', 'bg'], ['hairRow', 'hair', 'hair'], ['glassRow', 'glasses', 'glasses']].forEach(function (r) {
+        var row = el(r[0]); if (!row) return; var val = cfg[r[2]];
+        Array.prototype.forEach.call(row.querySelectorAll('[data-' + r[1] + ']'), function (x) {
+          if (x.getAttribute('data-' + r[1]) === val) x.classList.add('sel'); else x.classList.remove('sel');
+        });
+      });
+    }
+    var avShuffle = el('avShuffle');
+    if (avShuffle) avShuffle.onclick = function () { var n = newAvatar(); cfg.seed = n.seed; cfg.skin = n.skin; cfg.hairColor = n.hairColor; cfg.hair = n.hair; cfg.glasses = n.glasses; cfg.bg = n.bg; applySel(); refresh(); };
 
     // person type chips (tap again to clear)
     Array.prototype.forEach.call(el('ptypeRow').querySelectorAll('[data-ptype]'), function (b) {
@@ -1014,7 +1038,7 @@
     if (admin) {
       partnerBlock = household.partner
         ? '<button class="rowbtn" id="acRemovePartner">Remove partner (' + esc(household.partner.email) + ')</button>'
-        : '<button class="rowbtn" id="acInvite">' + ICON.plus + 'Invite my partner</button>';
+        : '<button class="rowbtn" id="acInvite">Invite my partner</button>';
     } else {
       partnerBlock = '<button class="rowbtn" id="acLeave">Leave this account</button>';
     }
@@ -1302,9 +1326,10 @@
     var findBtn = el('findBtn'); if (findBtn) findBtn.onclick = function () { state.view = 'find'; render(); };
     var editChild = el('editChild'); if (editChild) editChild.onclick = sheetEditChild;
     var editClub = el('editClub'); if (editClub) editClub.onclick = sheetEditClub;
+    var clubSwitch = el('clubSwitch'); if (clubSwitch) clubSwitch.onchange = function () { var id = this.value; if (!id || id === state.clubId) return; state.clubId = id; loadPeople(id).then(function () { render(); window.scrollTo(0, 0); }); };
+    Array.prototype.forEach.call(document.querySelectorAll('.pweye'), function (b) { b.onclick = function () { var inp = el(b.getAttribute('data-eye')); if (!inp) return; var show = inp.type === 'password'; inp.type = show ? 'text' : 'password'; b.innerHTML = show ? ICON.eyeOff : ICON.eye; b.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); }; });
     var pasteList = el('pasteList'); if (pasteList) pasteList.onclick = sheetPasteList;
     var importList = el('importList'); if (importList) importList.onclick = sheetImport;
-    var practiseBtn = el('practiseBtn'); if (practiseBtn) practiseBtn.onclick = function () { var c = clubById(state.clubId); startQuiz(people.slice(), c ? c.color : 'blue'); };
     var printBtn = el('printBtn'); if (printBtn) printBtn.onclick = printClub;
 
     // Find screen

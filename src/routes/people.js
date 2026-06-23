@@ -9,8 +9,12 @@ router.use(loadHousehold);
 
 const FIELDS = ['name', 'role', 'parents', 'hooks', 'birthday'];
 
-const HAIR_OK = ['short', 'long', 'curly', 'afro', 'bun', 'bald', 'hijab', 'none'];
-const GLASSES_OK = ['none', 'round', 'square', 'rectangle', 'cateye'];
+const HAIR_OK = ['none', 'shortFlat', 'shortCurly', 'shortWaved', 'theCaesar', 'straight01', 'straight02', 'bob', 'bun', 'longButNotTooLong', 'curly', 'curvy', 'bigHair', 'dreads', 'dreads01', 'dreads02', 'fro', 'froBand', 'frizzle', 'shaggy', 'shaggyMullet', 'shortRound', 'sides', 'frida', 'hijab', 'turban', 'hat', 'winterHat1',
+  // legacy soft-cartoon values (kept so older saved avatars still validate)
+  'short', 'long', 'afro', 'bald'];
+const GLASSES_OK = ['none', 'round', 'prescription01', 'prescription02', 'wayfarers', 'sunglasses', 'kurt', 'eyepatch',
+  // legacy
+  'square', 'rectangle', 'cateye'];
 const PTYPE_OK = ['', 'child', 'parent', 'teacher', 'instructor', 'coach', 'assistant', 'other'];
 function cleanPtype(v) { v = String(v || '').trim().toLowerCase(); return PTYPE_OK.indexOf(v) >= 0 ? v : ''; }
 
@@ -48,6 +52,7 @@ function sanitizeAvatar(val) {
   if (typeof obj.bg === 'string' && HEX.test(obj.bg)) out.bg = obj.bg;
   if (HAIR_OK.indexOf(obj.hair) >= 0) out.hair = obj.hair;
   if (GLASSES_OK.indexOf(obj.glasses) >= 0) out.glasses = obj.glasses;
+  if (typeof obj.seed === 'string' && obj.seed.length <= 24 && /^[A-Za-z0-9_-]+$/.test(obj.seed)) out.seed = obj.seed;
   return Object.keys(out).length ? JSON.stringify(out) : '';
 }
 
