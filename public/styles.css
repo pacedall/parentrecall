@@ -342,3 +342,7 @@ input.f:focus-visible,textarea.f:focus-visible,.selectpill select:focus-visible{
 .shuffle{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--navy);background:#fff;border:1px solid #E2E6F0;border-radius:20px;padding:6px 12px;cursor:pointer}
 .shuffle:hover{background:#F4F6FB}
 .shuffle svg{width:15px;height:15px}
+
+/* Report-abuse chip (feedback sheet) */
+.chip.danger{color:#B42318;border-color:#F3C0BA}
+.chip.danger.sel{background:#B42318;border-color:#B42318;color:#fff}

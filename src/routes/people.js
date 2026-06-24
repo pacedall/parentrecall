@@ -56,11 +56,11 @@ function sanitizeAvatar(val) {
   return Object.keys(out).length ? JSON.stringify(out) : '';
 }
 
-// Privacy: keep the first name in full, shorten every following word (surnames)
-// to 2 letters. "John Smith" -> "John Sm".
+// Privacy: keep the first name (max 15 chars) and shorten every following word
+// (surnames) to 3 letters. "Oscar Smith" -> "Oscar Smi".
 function clampName(s) {
   return String(s || '').trim().replace(/\s+/g, ' ').split(' ')
-    .map(function (w, i) { return i === 0 ? w : w.slice(0, 2); })
+    .map(function (w, i) { return i === 0 ? w.slice(0, 15) : w.slice(0, 3); })
     .join(' ').trim().slice(0, 120);
 }
 

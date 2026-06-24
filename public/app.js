@@ -733,6 +733,10 @@
     var cfg = newAvatar();
     if (p && p.avatar) { try { cfg = normalizeAvatar(JSON.parse(p.avatar)); } catch (e) {} }
     var ptype = (p && p.ptype) || '';
+    var nm0 = (p && p.name) ? String(p.name).trim().replace(/\s+/g, ' ') : '';
+    var nmSp = nm0.indexOf(' ');
+    var firstVal = (nmSp >= 0 ? nm0.slice(0, nmSp) : nm0).slice(0, 15);
+    var lastVal = nmSp >= 0 ? nm0.slice(nmSp + 1).slice(0, 3) : '';
     var PTYPES = [['child', 'Child'], ['parent', 'Parent/Carer'], ['teacher', 'Teacher'], ['instructor', 'Instructor'], ['coach', 'Coach'], ['assistant', 'Assistant'], ['other', 'Other']];
     var parentsInit = [];
     if (p) {
@@ -774,8 +778,10 @@
       '<div class="avlabel">Hair style</div><div class="chiprow" id="hairRow">' + chips(HAIRSTYLE, 'hair', 'hair', HAIRLABEL) + '</div>' +
       '<div class="avlabel">Glasses</div><div class="chiprow" id="glassRow">' + chips(GLASSES, 'glasses', 'glasses', GLASSLABEL) + '</div>' +
       '<div class="avlabel">Background</div><div class="swatchrow" id="bgRow">' + swatches(BG, 'bg', 'bg') + '</div>' +
-      '<label>Name <span class="req">·required</span></label>' +
-      '<input class="f" id="f_pname" placeholder="e.g. Oscar" value="' + (p ? attr(p.name) : '') + '" autocomplete="off"/>' +
+      '<label>First name <span class="req">·required</span></label>' +
+      '<input class="f" id="f_fname" maxlength="15" placeholder="e.g. Oscar" value="' + attr(firstVal) + '" autocomplete="off"/>' +
+      '<label>Last name <span class="opt">optional · first 3 letters only, for privacy</span></label>' +
+      '<input class="f" id="f_lname" maxlength="3" placeholder="e.g. Smi" value="' + attr(lastVal) + '" autocomplete="off"/>' +
       '<div class="avlabel">Type <span class="opt" style="text-transform:none;letter-spacing:0">optional</span></div>' +
       '<div class="chiprow" id="ptypeRow">' + PTYPES.map(function (o) {
         return '<button type="button" class="chip' + (ptype === o[0] ? ' sel' : '') + '" data-ptype="' + o[0] + '">' + o[1] + '</button>';
@@ -850,7 +856,7 @@
         if (nm) parents.push({ name: nm, label: el('f_parlabel' + idx).value || 'other' });
       });
       return {
-        name: el('f_pname').value.trim(),
+        name: (function () { var fn = el('f_fname').value.trim().slice(0, 15); var ln = el('f_lname').value.trim().slice(0, 3); return fn + (ln ? ' ' + ln : ''); })(),
         role: el('f_role').value.trim(),
         parents_list: parents,
         hooks: el('f_hooks').value.trim(),
@@ -860,7 +866,7 @@
       };
     }
 
-    wireSheet('f_pname', function () {
+    wireSheet('f_fname', function () {
       var body = buildBody();
       if (edit) {
         return api('/people/' + p.id, { method: 'PUT', body: body }).then(function () {
@@ -874,7 +880,7 @@
     });
 
     if (!edit) {
-      var name = el('f_pname'), again = el('saveAnotherBtn');
+      var name = el('f_fname'), again = el('saveAnotherBtn');
       name.addEventListener('input', function () { again.disabled = !name.value.trim(); });
       again.onclick = function () {
         if (!name.value.trim()) return;
@@ -991,13 +997,13 @@
   }
 
   function sheetFeedback() {
-    var kinds = [['feedback', 'Feedback'], ['suggestion', 'Suggestion'], ['bug', 'Bug']];
+    var kinds = [['feedback', 'Feedback'], ['suggestion', 'Suggestion'], ['bug', 'Bug'], ['abuse', 'Report abuse']];
     var kind = 'feedback';
     var loggedIn = !!token;
     el('sheet').innerHTML =
       '<div class="grab"></div><h3>Send feedback</h3>' +
       '<p class="lead">We read everything. Tell us what\u2019s working, what isn\u2019t, or what you\u2019d love to see next.</p>' +
-      '<div class="chiprow" id="fbKind">' + kinds.map(function (k) { return '<button type="button" class="chip' + (k[0] === 'feedback' ? ' sel' : '') + '" data-k="' + k[0] + '">' + k[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="chiprow" id="fbKind">' + kinds.map(function (k) { return '<button type="button" class="chip' + (k[0] === 'feedback' ? ' sel' : '') + (k[0] === 'abuse' ? ' danger' : '') + '" data-k="' + k[0] + '">' + k[1] + '</button>'; }).join('') + '</div>' +
       '<label>Your message</label>' +
       '<textarea class="f" id="f_fb" rows="5" placeholder="What\u2019s on your mind?"></textarea>' +
       (loggedIn ? '' : '<label>Email <span class="opt">optional</span></label><input class="f" id="f_fbemail" type="email" placeholder="you@example.com \u2014 if you\u2019d like a reply" autocomplete="off"/>') +
@@ -1008,7 +1014,7 @@
     var ta = el('f_fb'), send = el('fbSend');
     ta.addEventListener('input', function () { send.disabled = ta.value.trim().length < 2; });
     Array.prototype.forEach.call(el('fbKind').querySelectorAll('[data-k]'), function (b) {
-      b.onclick = function () { kind = b.getAttribute('data-k'); Array.prototype.forEach.call(el('fbKind').children, function (x) { x.classList.remove('sel'); }); b.classList.add('sel'); };
+      b.onclick = function () { kind = b.getAttribute('data-k'); Array.prototype.forEach.call(el('fbKind').children, function (x) { x.classList.remove('sel'); }); b.classList.add('sel'); el('f_fb').placeholder = (kind === 'abuse') ? 'Describe what happened \u2014 include any names, dates and details so we can look into it.' : 'What\u2019s on your mind?'; el('fbSend').textContent = (kind === 'abuse') ? 'Send report' : 'Send'; };
     });
     send.onclick = function () {
       var msg = ta.value.trim();

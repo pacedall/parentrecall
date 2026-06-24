@@ -9,7 +9,7 @@ const router = express.Router();
 // modest limit to deter abuse of the public endpoint
 const limiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
 
-const KIND_OK = ['feedback', 'suggestion', 'bug'];
+const KIND_OK = ['feedback', 'suggestion', 'bug', 'abuse'];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // best-effort: identify the user if a valid token is present, else treat as anonymous
@@ -37,7 +37,7 @@ router.post('/', limiter, async (req, res) => {
     await db.query('INSERT INTO feedback (user_id, email, kind, message) VALUES ($1, $2, $3, $4)', [uid, email || null, kind, message.slice(0, 4000)]);
     sendMail({
       to: process.env.FEEDBACK_TO || 'team@parentrecall.com',
-      subject: 'ParentRecall ' + kind + (email ? ' from ' + email : ' (anonymous)'),
+      subject: (kind === 'abuse' ? '\u26A0 ParentRecall ABUSE REPORT' : 'ParentRecall ' + kind) + (email ? ' from ' + email : ' (anonymous)'),
       text: message + '\n\n— ' + (email || 'anonymous') + (uid ? ' (user #' + uid + ')' : ''),
     }).catch(function () {});
     res.status(201).json({ ok: true });
