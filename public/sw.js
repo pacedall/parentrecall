@@ -1,12 +1,14 @@
 /* ParentRecall service worker.
-   - App shell: cache-first (instant launch, works offline).
+   - App shell: stale-while-revalidate (instant launch, auto-updates on next load).
    - API GETs: network-first with cache fallback (fresh when online, readable offline).
-   - API writes (POST/PUT/DELETE): network only, never cached. */
-const SHELL_CACHE = 'parentrecall-shell-v2';
-const API_CACHE = 'parentrecall-api-v2';
+   - API writes (POST/PUT/DELETE): network only, never cached.
+   Bump the cache version on each release to force a clean refresh. */
+const SHELL_CACHE = 'parentrecall-shell-v3';
+const API_CACHE = 'parentrecall-api-v3';
 const SHELL = [
   '/', '/index.html', '/styles.css', '/app.js', '/logo.png',
-  '/icon-192.png', '/icon-512.png', '/manifest.json', '/vendor/xlsx.full.min.js'
+  '/icon-192.png', '/icon-512.png', '/manifest.json',
+  '/vendor/xlsx.full.min.js', '/vendor/dicebear.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -27,7 +29,6 @@ self.addEventListener('fetch', (event) => {
 
   if (url.pathname.startsWith('/api/')) {
     if (req.method !== 'GET') return; // writes: let them hit the network normally
-    // network-first, fall back to the last cached copy when offline
     event.respondWith(
       fetch(req)
         .then((res) => {
@@ -43,11 +44,13 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (req.method !== 'GET') return;
-  // app shell: cache-first
+
+  // App shell: stale-while-revalidate.
+  // Serve the cached copy instantly, but always fetch a fresh copy in the
+  // background and update the cache, so the next load picks up new deploys.
   event.respondWith(
     caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
+      const network = fetch(req)
         .then((res) => {
           if (res && res.status === 200 && url.origin === location.origin) {
             const copy = res.clone();
@@ -55,7 +58,8 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         })
-        .catch(() => { if (req.mode === 'navigate') return caches.match('/index.html'); });
+        .catch(() => cached || (req.mode === 'navigate' ? caches.match('/index.html') : undefined));
+      return cached || network;
     })
   );
 });
