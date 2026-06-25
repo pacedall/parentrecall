@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>ParentRecall · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --navy:#18306C; --ink:#1C2533; --muted:#6B7280; --paper:#F6F8FC;
+    --line:#E4E8F0; --orange:#F2641E; --green:#15803D; --bar:#4B7BEC;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:920px;margin:0 auto;padding:22px 18px 60px}
+  h1{font-size:20px;font-weight:800;color:var(--navy);margin:0}
+  .sub{color:var(--muted);font-size:13px;margin-top:3px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  button{font-family:inherit;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;border:1px solid var(--line);background:#fff;color:var(--navy);padding:9px 14px}
+  button.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+  button:hover{filter:brightness(.98)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:18px 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
+  .card .label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .card .num{font-size:30px;font-weight:800;color:var(--navy);margin-top:6px;line-height:1}
+  .card .hint{font-size:12px;color:var(--muted);margin-top:4px}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;margin-top:18px}
+  .panel h2{font-size:14px;font-weight:700;color:var(--navy);margin:0 0 14px}
+  .chart{display:flex;align-items:flex-end;gap:6px;height:120px}
+  .chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+  .chart .barwrap{width:100%;height:96px;display:flex;align-items:flex-end}
+  .chart .bar{width:100%;background:var(--bar);border-radius:5px 5px 0 0;min-height:2px;transition:height .2s}
+  .chart .d{font-size:10px;color:var(--muted);white-space:nowrap}
+  .chart .v{font-size:11px;font-weight:700;color:var(--navy)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:10px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:0}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px}
+  .badge.yes{background:#E7F6EC;color:var(--green)}
+  .badge.no{background:#FDEEE6;color:var(--orange)}
+  .mini{display:flex;gap:16px;flex-wrap:wrap;margin-top:4px}
+  .mini .m{font-size:13px;color:var(--muted)}
+  .mini .m b{color:var(--navy);font-weight:700}
+  .gate{max-width:380px;margin:12vh auto 0;background:#fff;border:1px solid var(--line);border-radius:16px;padding:24px}
+  .gate h1{margin-bottom:6px}
+  .gate input{width:100%;font-family:inherit;font-size:15px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;margin:14px 0}
+  .gate button{width:100%}
+  .err{color:#B42318;font-size:13px;margin-top:10px;min-height:18px}
+  .hidden{display:none}
+  .foot{color:var(--muted);font-size:12px;margin-top:24px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Key gate -->
+  <div id="gate" class="gate">
+    <h1>ParentRecall Admin</h1>
+    <div class="sub">Enter your admin key to view registrations.</div>
+    <input id="keyInput" type="password" placeholder="Admin key" autocomplete="off" />
+    <button class="primary" id="enterBtn">View dashboard</button>
+    <div class="err" id="gateErr"></div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dash" class="hidden">
+    <div class="row">
+      <div>
+        <h1>ParentRecall Admin</h1>
+        <div class="sub" id="genAt"></div>
+      </div>
+      <div class="row" style="gap:8px">
+        <button id="refreshBtn">Refresh</button>
+        <button id="signoutBtn">Sign out</button>
+      </div>
+    </div>
+
+    <div class="cards" id="cards"></div>
+
+    <div class="panel">
+      <h2>New registrations — last 14 days</h2>
+      <div class="chart" id="chart"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Engagement</h2>
+      <div class="mini" id="engagement"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Recent sign-ups</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Email</th><th>Joined</th><th>Verified</th></tr></thead>
+          <tbody id="recent"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="foot">Visible only with your admin key. Keep the key private.</div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  var KEY = 'pr_admin_key';
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
+  function n(v) { return (v == null) ? '—' : Number(v).toLocaleString(); }
+  function show(el, on) { el.classList[on ? 'remove' : 'add']('hidden'); }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    var d = new Date(iso);
+    return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) +
+      ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function lastNDays(n) {
+    var out = [], now = new Date();
+    for (var i = n - 1; i >= 0; i--) {
+      var d = new Date(now); d.setDate(now.getDate() - i);
+      out.push(d.toISOString().slice(0, 10));
+    }
+    return out;
+  }
+
+  function getKey() { try { return sessionStorage.getItem(KEY) || ''; } catch (e) { return ''; } }
+  function setKey(k) { try { sessionStorage.setItem(KEY, k); } catch (e) {} }
+  function clearKey() { try { sessionStorage.removeItem(KEY); } catch (e) {} }
+
+  function render(s) {
+    $('genAt').textContent = 'Updated ' + fmtDate(s.generatedAt);
+
+    var cards = [
+      ['Total users', n(s.totalUsers), s.verifiedUsers != null ? n(s.verifiedUsers) + ' verified' : ''],
+      ['Last 24 hours', n(s.last24h), ''],
+      ['Last 7 days', n(s.last7d), ''],
+      ['Last 30 days', n(s.last30d), '']
+    ];
+    $('cards').innerHTML = cards.map(function (c) {
+      return '<div class="card"><div class="label">' + c[0] + '</div><div class="num">' + c[1] + '</div>' +
+        (c[2] ? '<div class="hint">' + c[2] + '</div>' : '') + '</div>';
+    }).join('');
+
+    // chart
+    var days = lastNDays(14);
+    var map = {};
+    (s.daily || []).forEach(function (r) { map[r.d] = r.n; });
+    var counts = days.map(function (d) { return map[d] || 0; });
+    var max = Math.max.apply(null, counts.concat([1]));
+    $('chart').innerHTML = days.map(function (d, i) {
+      var h = Math.round((counts[i] / max) * 96);
+      var lbl = new Date(d + 'T00:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+      return '<div class="col" title="' + lbl + ': ' + counts[i] + '">' +
+        '<div class="v">' + (counts[i] || '') + '</div>' +
+        '<div class="barwrap"><div class="bar" style="height:' + (counts[i] ? Math.max(h, 3) : 0) + 'px"></div></div>' +
+        '<div class="d">' + lbl + '</div></div>';
+    }).join('');
+
+    // engagement
+    $('engagement').innerHTML =
+      '<div class="m"><b>' + n(s.households) + '</b> households</div>' +
+      '<div class="m"><b>' + n(s.children) + '</b> children</div>' +
+      '<div class="m"><b>' + n(s.clubs) + '</b> clubs</div>' +
+      '<div class="m"><b>' + n(s.people) + '</b> people saved</div>';
+
+    // recent
+    $('recent').innerHTML = (s.recent && s.recent.length)
+      ? s.recent.map(function (r) {
+          return '<tr><td>' + esc(r.email) + '</td><td>' + fmtDate(r.created_at) + '</td><td>' +
+            (r.verified ? '<span class="badge yes">Verified</span>' : '<span class="badge no">Pending</span>') + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="3" style="color:var(--muted)">No sign-ups yet.</td></tr>';
+  }
+
+  function load() {
+    var key = getKey();
+    if (!key) { show($('dash'), false); show($('gate'), true); return; }
+    fetch('/api/admin/stats', { headers: { 'x-admin-key': key } })
+      .then(function (res) {
+        if (res.status === 401) { clearKey(); show($('dash'), false); show($('gate'), true); $('gateErr').textContent = 'That key was not accepted.'; return null; }
+        if (res.status === 503) { show($('dash'), false); show($('gate'), true); $('gateErr').textContent = 'Dashboard is disabled — set an ADMIN_KEY on the server.'; return null; }
+        if (!res.ok) { $('gateErr').textContent = 'Something went wrong (' + res.status + ').'; return null; }
+        return res.json();
+      })
+      .then(function (data) { if (!data) return; show($('gate'), false); show($('dash'), true); render(data); })
+      .catch(function () { $('gateErr').textContent = 'Network error — please try again.'; });
+  }
+
+  $('enterBtn').onclick = function () {
+    var k = $('keyInput').value.trim();
+    if (!k) { $('gateErr').textContent = 'Please enter your admin key.'; return; }
+    $('gateErr').textContent = '';
+    setKey(k); load();
+  };
+  $('keyInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('enterBtn').click(); });
+  $('refreshBtn').onclick = load;
+  $('signoutBtn').onclick = function () { clearKey(); $('keyInput').value = ''; show($('dash'), false); show($('gate'), true); };
+
+  load();
+})();
+</script>
+</body>
+</html>

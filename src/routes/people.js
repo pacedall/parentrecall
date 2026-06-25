@@ -29,7 +29,7 @@ function cleanParents(raw) {
   const out = [];
   for (const e of arr) {
     if (!e || typeof e !== 'object') continue;
-    const name = clampName(e.name || '');
+    const name = String(e.name || '').trim().replace(/\s+/g, ' ').slice(0, 15);
     if (!name) continue;
     const label = PLABEL_OK.indexOf(e.label) >= 0 ? e.label : 'other';
     out.push({ name: name, label: label });

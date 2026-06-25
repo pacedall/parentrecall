@@ -5,7 +5,7 @@
 // Good enough for a single instance. For multiple instances or precise timing,
 // move this to a dedicated cron/worker.
 const db = require('./db');
-const { sendBirthdayDigest } = require('./mailer');
+const { sendBirthdayDigest, sendWeeklyAdminDigest } = require('./mailer');
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -67,8 +67,50 @@ async function runBirthdayDigest() {
 
 function start() {
   // first run a little after boot, then daily
-  setTimeout(function () { runBirthdayDigest().catch(function () {}); }, 30 * 1000);
-  setInterval(function () { runBirthdayDigest().catch(function () {}); }, DAY_MS);
+  setTimeout(function () { runBirthdayDigest().catch(function () {}); maybeWeeklyDigest().catch(function () {}); }, 30 * 1000);
+  setInterval(function () { runBirthdayDigest().catch(function () {}); maybeWeeklyDigest().catch(function () {}); }, DAY_MS);
 }
 
-module.exports = { start, runBirthdayDigest };
+// Weekly founder digest of new registrations, emailed to team@parentrecall.com.
+// Sent at most once every 7 days; a marker in app_meta makes this safe across
+// restarts and redeploys (it won't double-send within a week).
+async function maybeWeeklyDigest() {
+  if (process.env.WEEKLY_DIGEST === 'false') return;
+  let last = null;
+  try {
+    const r = await db.query("SELECT value FROM app_meta WHERE key = 'last_weekly_digest'");
+    if (r.rows[0] && r.rows[0].value) last = new Date(r.rows[0].value);
+  } catch (e) { /* table may not exist on first boot; treat as never sent */ }
+  const now = new Date();
+  if (last && (now.getTime() - last.getTime()) < (7 * DAY_MS - 60 * 60 * 1000)) return;
+  await runWeeklyAdminDigest();
+  try {
+    await db.query(
+      "INSERT INTO app_meta (key, value, updated_at) VALUES ('last_weekly_digest', $1, now()) " +
+      "ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = now()",
+      [now.toISOString()]
+    );
+  } catch (e) { console.error('[weekly] could not record marker', e.message); }
+}
+
+async function runWeeklyAdminDigest() {
+  const to = process.env.WEEKLY_DIGEST_TO || 'team@parentrecall.com';
+  async function rows(sql) { try { return (await db.query(sql)).rows; } catch (e) { return null; } }
+  async function count(sql) { const r = await rows(sql); return r && r[0] ? Number(r[0].n) : null; }
+
+  const data = {};
+  data.newThisWeek = await count("SELECT count(*) n FROM users WHERE created_at > now() - interval '7 days'");
+  data.totalUsers = await count('SELECT count(*) n FROM users');
+  data.verifiedUsers = await count('SELECT count(*) n FROM users WHERE email_verified');
+  data.households = await count('SELECT count(*) n FROM households');
+  data.children = await count('SELECT count(*) n FROM children');
+  data.clubs = await count('SELECT count(*) n FROM clubs');
+  data.people = await count('SELECT count(*) n FROM people');
+  const list = await rows("SELECT email, email_verified, created_at FROM users WHERE created_at > now() - interval '7 days' ORDER BY created_at DESC LIMIT 50");
+  data.recent = (list || []).map(function (r) { return { email: r.email, verified: !!r.email_verified, created_at: r.created_at }; });
+  data.appUrl = process.env.APP_URL || 'https://parentrecall.com';
+
+  await sendWeeklyAdminDigest(to, data);
+}
+
+module.exports = { start, runBirthdayDigest, runWeeklyAdminDigest, maybeWeeklyDigest };

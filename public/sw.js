@@ -3,8 +3,8 @@
    - API GETs: network-first with cache fallback (fresh when online, readable offline).
    - API writes (POST/PUT/DELETE): network only, never cached.
    Bump the cache version on each release to force a clean refresh. */
-const SHELL_CACHE = 'parentrecall-shell-v3';
-const API_CACHE = 'parentrecall-api-v3';
+const SHELL_CACHE = 'parentrecall-shell-v4';
+const API_CACHE = 'parentrecall-api-v4';
 const SHELL = [
   '/', '/index.html', '/styles.css', '/app.js', '/logo.png',
   '/icon-192.png', '/icon-512.png', '/manifest.json',

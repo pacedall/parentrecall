@@ -33,6 +33,7 @@ app.use('/api/children', require('./routes/children'));
 app.use('/api/clubs', require('./routes/clubs'));
 app.use('/api/people', require('./routes/people'));
 app.use('/api/feedback', require('./routes/feedback'));
+app.use('/api/admin', require('./routes/admin'));
 app.use('/api/demo', require('./routes/demo'));
 
 // Static frontend
@@ -43,6 +44,7 @@ app.use(express.static(publicDir));
 app.get('/privacy', (req, res) => res.sendFile(path.join(publicDir, 'privacy.html')));
 app.get('/terms', (req, res) => res.sendFile(path.join(publicDir, 'terms.html')));
 app.get('/delete-account', (req, res) => res.sendFile(path.join(publicDir, 'delete-account.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(publicDir, 'admin.html')));
 app.get('/data-deletion', (req, res) => res.sendFile(path.join(publicDir, 'delete-account.html')));
 
 app.get('*', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));

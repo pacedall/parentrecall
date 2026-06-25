@@ -748,7 +748,7 @@
       var opts = [['', 'Relationship\u2026'], ['mother', 'Mother'], ['father', 'Father'], ['other', 'Other']]
         .map(function (o) { return '<option value="' + o[0] + '"' + (e.label === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
       return '<div class="parentrow">' +
-        '<input class="f" id="f_par' + idx + '" placeholder="Name" value="' + attr(e.name || '') + '" autocomplete="off"/>' +
+        '<input class="f" id="f_par' + idx + '" maxlength="15" placeholder="Name" value="' + attr(e.name || '') + '" autocomplete="off"/>' +
         '<select class="f psel" id="f_parlabel' + idx + '">' + opts + '</select></div>';
     }
 

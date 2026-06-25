@@ -118,3 +118,10 @@ CREATE INDEX IF NOT EXISTS idx_people_club   ON people(club_id);
 CREATE INDEX IF NOT EXISTS idx_children_household ON children(household_id);
 CREATE INDEX IF NOT EXISTS idx_clubs_household ON clubs(household_id);
 CREATE INDEX IF NOT EXISTS idx_people_household ON people(household_id);
+
+-- Small key/value store for app-level markers (e.g. last weekly digest send).
+CREATE TABLE IF NOT EXISTS app_meta (
+  key        TEXT PRIMARY KEY,
+  value      TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
