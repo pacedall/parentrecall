@@ -9,7 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
   name             TEXT DEFAULT '',
   email_verified   BOOLEAN NOT NULL DEFAULT false,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-  last_accessed_at TIMESTAMPTZ
+  last_accessed_at TIMESTAMPTZ,
+  terms_accepted_at TIMESTAMPTZ,
+  terms_version    TEXT
 );
 
 -- Minimal record kept AFTER an account is hard-deleted, for security/abuse-prevention

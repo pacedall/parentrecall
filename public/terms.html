@@ -1,109 +1,291 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>Terms &amp; Conditions · ParentRecall</title>
-<meta name="description" content="The terms that govern your use of ParentRecall."/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-<style>
-  :root{--navy:#18306C;--orange:#F2641E;--teal:#0CA8A8;--muted:#5E6A86;--hair:#E7EBF3}
-  *{box-sizing:border-box}
-  html,body{margin:0;background:#F4F6FB;color:#33405E;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.62}
-  a{color:var(--orange)}
-  .nav{background:#fff;border-bottom:1px solid var(--hair);position:sticky;top:0;z-index:5}
-  .nav .in{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 20px}
-  .wordmark{font-family:Poppins;font-weight:800;font-size:19px;color:var(--navy);text-decoration:none}
-  .wordmark span{color:var(--orange)}
-  .nav a.back{font-size:14px;font-weight:600;color:var(--muted);text-decoration:none}
-  .nav a.back:hover{color:var(--navy)}
-  .doc{max-width:760px;margin:0 auto;padding:34px 22px 56px}
-  .doc h1{font-family:Poppins;font-weight:800;font-size:clamp(26px,5vw,34px);color:var(--navy);letter-spacing:-.02em;margin:0 0 6px}
-  .eff{font-size:13.5px;color:var(--muted);margin:0 0 24px}
-  .doc h2{font-family:Poppins;font-weight:700;font-size:19px;color:var(--navy);margin:32px 0 10px}
-  .doc p,.doc li{font-size:15px}
-  .doc ul{padding-left:20px;margin:8px 0}
-  .doc li{margin:5px 0}
-  .doc strong{color:var(--navy)}
-  .lead{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:16px 18px;margin:0 0 22px}
-  .lead p{margin:0;font-size:14.5px;color:var(--muted)}
-  .foot{border-top:1px solid var(--hair);background:#fff}
-  .foot .in{max-width:760px;margin:0 auto;padding:22px;font-size:13px;color:var(--muted)}
-  .foot a{color:var(--navy);text-decoration:none;font-weight:600;margin-right:16px}
-  .foot .co{margin-top:10px;line-height:1.5}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Terms &amp; Conditions | ParentRecall</title>
+  <meta name="description" content="Terms &amp; Conditions for ParentRecall, operated by Pacedall Labs Ltd.">
+  <style>
+:root {
+  --bg:#fdf9f3;
+  --card:#ffffff;
+  --text:#17202a;
+  --muted:#5f6b75;
+  --brand:#0d1b2a;
+  --accent:#f46a1e;
+  --line:#e6ded2;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.65;
+}
+header{
+  background:var(--brand);
+  color:white;
+  padding:48px 20px;
+}
+.header-inner, main, footer{
+  max-width:980px;
+  margin:0 auto;
+}
+.kicker{
+  color:#ffd7aa;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  font-size:.82rem;
+}
+h1{
+  margin:.25rem 0 0;
+  font-size:clamp(2rem,5vw,3.25rem);
+  line-height:1.08;
+}
+.subtitle{
+  margin-top:12px;
+  max-width:780px;
+  color:#e8eef5;
+  font-size:1.05rem;
+}
+main{
+  background:var(--card);
+  margin-top:-22px;
+  padding:34px 22px 48px;
+  border-radius:18px 18px 0 0;
+  box-shadow:0 10px 28px rgba(13,27,42,.08);
+}
+.notice{
+  border-left:5px solid var(--accent);
+  background:#fff6ee;
+  padding:16px 18px;
+  border-radius:10px;
+  margin:22px 0 28px;
+}
+.summary{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+  margin:24px 0;
+}
+.summary div{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:16px;
+  background:#fffdf9;
+}
+nav.toc{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:18px 20px;
+  background:#fffdf9;
+  margin:28px 0;
+}
+nav.toc ol{margin:8px 0 0 20px;padding:0}
+nav.toc a{color:var(--brand);text-decoration:none}
+nav.toc a:hover{text-decoration:underline}
+h2{
+  color:var(--brand);
+  border-top:1px solid var(--line);
+  padding-top:28px;
+  margin-top:34px;
+  line-height:1.25;
+}
+h3{color:var(--brand);margin-top:26px}
+ul{padding-left:1.4rem}
+li{margin:.4rem 0}
+strong{color:#101820}
+.small, footer{
+  color:var(--muted);
+  font-size:.94rem;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin:18px 0;
+}
+th,td{
+  border:1px solid var(--line);
+  text-align:left;
+  vertical-align:top;
+  padding:10px 12px;
+}
+th{
+  background:#fff6ee;
+}
+footer{
+  padding:28px 20px 42px;
+}
+a{color:#0d4d8b}
+@media print{
+  header{background:white;color:black;padding:20px 0}
+  .subtitle,.kicker{color:black}
+  main{box-shadow:none;margin:0;padding:0}
+  a{text-decoration:none;color:black}
+}
 </style>
 </head>
 <body>
-  <nav class="nav"><div class="in">
-    <a class="wordmark" href="/">Parent<span>Recall</span></a>
-    <a class="back" href="/">&larr; Back to ParentRecall</a>
-  </div></nav>
-
-  <main class="doc">
+<header>
+  <div class="header-inner">
+    <a href="/" style="display:inline-block;margin-bottom:12px;color:#ffd7aa;text-decoration:none;font-weight:700;font-size:.9rem">&larr; Back to ParentRecall</a>
+    <div class="kicker">ParentRecall legal document</div>
     <h1>Terms &amp; Conditions</h1>
-    <p class="eff">Last updated: 22 June 2026</p>
-
-    <div class="lead"><p>These terms are an agreement between you and Pacedall Labs Ltd for your use of ParentRecall. Please read them. By creating an account or using the service, you agree to them.</p></div>
-
-    <h2>1. Who we are</h2>
-    <p>ParentRecall is operated by <strong>Pacedall Labs Ltd</strong> (&ldquo;we&rdquo;, &ldquo;us&rdquo;), a company registered in England and Wales (company number 16619412), registered office 71&ndash;75 Shelton Street, Covent Garden, London, WC2H 9JQ. You can reach us at <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
-
-    <h2>2. Eligibility</h2>
-    <p>You must be at least 18 years old and a parent or guardian (or otherwise have a genuine personal reason to use the service) to create an account. By registering, you confirm that you are.</p>
-
-    <h2>3. The service</h2>
-    <p>ParentRecall is a private memory aid that helps you remember your children&rsquo;s classmates, fellow parents, and coaches. It is <strong>currently provided free of charge</strong>, and we may add, change, or remove features over time to improve it.</p>
-    <p><strong>Pricing may change in the future.</strong> We may introduce paid features, plans, or charges at a later date. If we do, we will make this clear before any charge applies; any paid option will be optional and subject to additional terms (including subscription, renewal, and cancellation terms) that you can review and accept at that time. The core service described here is free today, and we will give you reasonable notice of any change that would introduce a charge for features you already use.</p>
-    <p>If you install ParentRecall from an app store (such as Apple&rsquo;s App Store or Google Play), that store&rsquo;s own terms also apply to your download and use of the app.</p>
-
-    <h2>4. Your account</h2>
-    <p>You&rsquo;re responsible for the information you provide, for keeping your password secure, and for activity that happens under your account. Tell us promptly at <a href="mailto:team@parentrecall.com">team@parentrecall.com</a> if you think your account has been accessed without your permission.</p>
-
-    <h2>5. Family (household) accounts</h2>
-    <p>You may invite one partner to share your account. The account <strong>admin</strong> (the person who created it) has full control: they can add or remove children, clubs and people, invite or remove the partner, export the data, and delete the account. An invited <strong>associate</strong> can add and edit people and clubs but cannot delete a child or a whole club, remove the partner, export, or delete the account.</p>
-    <p>If you invite someone, you confirm you have their agreement to be added, and you&rsquo;re responsible for who you give access to. Removing a partner revokes their access but keeps the information they added on the account.</p>
-
-    <h2>6. Acceptable use</h2>
-    <p>You agree to use ParentRecall lawfully and only for your own personal memory needs. In particular, you agree that you will not:</p>
-    <ul>
-      <li>record information about other people that you have no legitimate personal reason to hold, or use the service to harass, profile, or harm anyone;</li>
-      <li>enter unlawful, abusive, or harmful content;</li>
-      <li>attempt to access other users&rsquo; data, break or probe our security, scrape, or reverse-engineer the service;</li>
-      <li>use the service in any way that breaches applicable data protection or other laws.</li>
-    </ul>
-    <p>The product deliberately does not allow photo uploads, and you must not attempt to circumvent this or other privacy safeguards.</p>
-
-    <h2>7. Your content</h2>
-    <p>The information you add stays yours. You grant us a limited licence to store and process it solely to operate the service for you (for example to display your lists, send the emails you ask for, and back the data up). We do not sell it or use it for advertising. You can export or delete it at any time.</p>
-
-    <h2>8. Our intellectual property</h2>
-    <p>ParentRecall &mdash; including its software, design, and the ParentRecall name and branding &mdash; belongs to Pacedall Labs Ltd. These terms don&rsquo;t give you any ownership of it.</p>
-
-    <h2>9. Availability and changes</h2>
-    <p>We work to keep the service available and reliable, but because it&rsquo;s a free service we can&rsquo;t guarantee it will always be uninterrupted or error-free. We may modify, suspend, or discontinue all or part of it, and we&rsquo;ll give reasonable notice of significant changes where we can.</p>
-
-    <h2>10. Disclaimers</h2>
-    <p>ParentRecall is provided &ldquo;as is&rdquo; and is a memory aid, not an authoritative record. We don&rsquo;t warrant that it will be uninterrupted, error-free, or fit for any particular purpose, and we&rsquo;re not responsible for decisions you make based on the notes you store. To the fullest extent permitted by law, we exclude implied warranties.</p>
-
-    <h2>11. Liability</h2>
-    <p>Nothing in these terms limits liability that cannot be limited by law (such as liability for death or personal injury caused by negligence, or for fraud). Subject to that, we are not liable for indirect or consequential losses, or for loss arising from your use of (or inability to use) a free service, and our total liability to you is limited to the extent permitted by law.</p>
-
-    <h2>12. Suspension and termination</h2>
-    <p>You can stop using ParentRecall and delete your account at any time from the Account screen. We may suspend or end access if you breach these terms or to protect the service or other users. If we close the service, we&rsquo;ll give you reasonable notice and a chance to export your data.</p>
-
-    <h2>13. Governing law</h2>
-    <p>These terms are governed by the laws of England and Wales, and the courts of England and Wales have exclusive jurisdiction, except that if you live elsewhere in the UK you may bring proceedings in your own jurisdiction.</p>
-
-    <h2>14. Changes to these terms</h2>
-    <p>We may update these terms from time to time. When we make material changes we&rsquo;ll update the date at the top and, where appropriate, notify you in the app or by email. Continuing to use the service after a change means you accept the updated terms.</p>
-
-    <h2>15. Contact</h2>
-    <p>Questions about these terms? Email <a href="mailto:team@parentrecall.com">team@parentrecall.com</a> or call +44 20 3769 8842.</p>
-  </main>
-
-  <footer class="foot"><div class="in">
-    <div><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/delete-account">Delete account</a><a href="/">Home</a></div>
-    <div class="co">&copy; 2026 Pacedall Labs Ltd &mdash; registered in England &amp; Wales (company no. 16619412).<br/>Registered office: 71&ndash;75 Shelton Street, Covent Garden, London, WC2H 9JQ.<br/>ICO registration: ZB969483.<br/><a href="mailto:team@parentrecall.com">team@parentrecall.com</a> &middot; +44 20 3769 8842</div>
-  </div></footer>
+    <p class="subtitle">The rules for using ParentRecall across the website, Progressive Web App, Apple App Store and Google Play.</p>
+  </div>
+</header>
+<main>
+  <p class="small"><strong>Last updated:</strong> 25 June 2026<br>
+  <strong>Operated by:</strong> Pacedall Labs Ltd, company number 16619412, registered in England and Wales.<br>
+  <strong>Registered office:</strong> 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ.<br>
+  <strong>ICO registration:</strong> ZB969483. <strong>Contact:</strong> <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
+  <div class="notice"><strong>Important:</strong> ParentRecall is a memory aid, not an official school, safeguarding, emergency contact or identity verification system.</div>
+  <div class="summary"><div><strong>Plain-English summary</strong><br>ParentRecall is a private memory aid for adults. Use it fairly, keep information limited, and do not use it to monitor or harm anyone.</div>
+<div><strong>Current pricing</strong><br>The service is currently free. Optional paid features may be introduced in future with clear notice before any charge.</div>
+<div><strong>Privacy controls</strong><br>No photographs, no public profiles, no social feed, shortened surnames, private household accounts.</div></div>
+  <nav class="toc" aria-label="Table of contents">
+    <strong>Contents</strong>
+    <ol><li><a href="#1-about-these-terms">1. About these Terms</a></li>
+<li><a href="#2-what-parentrecall-is">2. What ParentRecall is</a></li>
+<li><a href="#3-eligibility">3. Eligibility</a></li>
+<li><a href="#4-your-account">4. Your account</a></li>
+<li><a href="#5-household-accounts-and-partner-access">5. Household accounts and partner access</a></li>
+<li><a href="#6-information-you-enter-about-other-people">6. Information you enter about other people</a></li>
+<li><a href="#7-privacy-by-design-controls">7. Privacy-by-design controls</a></li>
+<li><a href="#8-free-service-and-future-paid-features">8. Free service and future paid features</a></li>
+<li><a href="#9-apple-app-store-and-google-play">9. Apple App Store and Google Play</a></li>
+<li><a href="#10-acceptable-use">10. Acceptable use</a></li>
+<li><a href="#11-your-content-and-licence-to-us">11. Your content and licence to us</a></li>
+<li><a href="#12-parentrecall-intellectual-property">12. ParentRecall intellectual property</a></li>
+<li><a href="#13-service-availability-and-changes">13. Service availability and changes</a></li>
+<li><a href="#14-disclaimers">14. Disclaimers</a></li>
+<li><a href="#15-suspension-and-termination">15. Suspension and termination</a></li>
+<li><a href="#16-deletion-and-export">16. Deletion and export</a></li>
+<li><a href="#17-liability">17. Liability</a></li>
+<li><a href="#18-consumer-rights">18. Consumer rights</a></li>
+<li><a href="#19-changes-to-these-terms">19. Changes to these Terms</a></li>
+<li><a href="#20-governing-law-and-disputes">20. Governing law and disputes</a></li>
+<li><a href="#21-contact">21. Contact</a></li></ol>
+  </nav>
+  <section id="1-about-these-terms"><h2>1. About these Terms</h2>
+<p>These Terms &amp; Conditions (“Terms”) govern your access to and use of ParentRecall, including the ParentRecall website, web application, Progressive Web App, Apple App Store app and Google Play app.</p>
+<p>ParentRecall is operated by Pacedall Labs Ltd (“ParentRecall”, “we”, “us” or “our”). By creating an account, installing the app, accessing the website or using the service, you agree to these Terms.</p>
+<p>If you do not agree to these Terms, you must not use ParentRecall.</p>
+</section><section id="2-what-parentrecall-is"><h2>2. What ParentRecall is</h2>
+<p>ParentRecall is a private memory aid for parents, guardians and carers. It helps adults remember names and basic details of people connected with their child’s school, clubs, classes and activities, such as classmates, fellow parents, coaches and instructors.</p>
+<p>ParentRecall is deliberately not a social network. There are no public profiles, feeds, comments, messaging tools, friend-finding features, public directories or ways for one household to search for another household’s data.</p>
+<p>The service is designed around data minimisation. It does not allow photo uploads, does not store photographs, and uses illustrated avatar settings rather than real images.</p>
+</section><section id="3-eligibility"><h2>3. Eligibility</h2>
+<p>You must be at least 18 years old to create a ParentRecall account.</p>
+<p>You may only use ParentRecall where you have a genuine personal or household reason to remember the information you enter. For example, using it to remember your child’s classmates, other parents, teachers, coaches or club contacts is acceptable. Using it to build lists about people for unrelated, commercial, intrusive or harmful purposes is not acceptable.</p>
+<p>ParentRecall is not intended for children to create accounts or use directly.</p>
+</section><section id="4-your-account"><h2>4. Your account</h2>
+<p>You are responsible for:</p>
+<ul>
+<li>providing accurate account information;</li>
+<li>keeping your password and device secure;</li>
+<li>all activity that takes place under your account;</li>
+<li>making sure the information you enter is limited, appropriate and lawful; and</li>
+<li>telling us promptly if you believe your account has been accessed without permission.</li>
+</ul>
+<p>You can contact us at <a href="mailto:team@parentrecall.com">team@parentrecall.com</a> if you suspect unauthorised access.</p>
+</section><section id="5-household-accounts-and-partner-access"><h2>5. Household accounts and partner access</h2>
+<p>ParentRecall may allow a household account to invite one partner, spouse, co-parent, guardian or carer to share the household data.</p>
+<p>The account owner or household administrator controls the account. The administrator may add or remove children, clubs, classes and people, invite or remove the partner, export the household data and delete the account.</p>
+<p>An invited partner may view, add and edit information within the household account, but may have more limited permissions than the administrator.</p>
+<p>If you invite another person, you confirm that you have their permission to invite them and that they are an appropriate person to access the household account. Removing a partner will revoke their access, but information they previously added may remain unless the administrator edits or deletes it.</p>
+</section><section id="6-information-you-enter-about-other-people"><h2>6. Information you enter about other people</h2>
+<p>ParentRecall allows you to record limited information about other people, including children and adults. This is sensitive from a trust perspective even where the information is deliberately minimised.</p>
+<p>You agree that you will only enter information where:</p>
+<ul>
+<li>you have a genuine personal or household reason to remember it;</li>
+<li>the information is relevant and proportionate for that purpose;</li>
+<li>the information is not intrusive, excessive or unfair;</li>
+<li>you do not use the service to monitor, target, profile, harass or harm anyone; and</li>
+<li>you delete information when you no longer need it.</li>
+</ul>
+<p>You must not enter unnecessary sensitive information, including health, medical, disability, religion, ethnicity, political opinion, sexual orientation or other special-category information. ParentRecall is a name-and-face memory aid and does not need that information.</p>
+</section><section id="7-privacy-by-design-controls"><h2>7. Privacy-by-design controls</h2>
+<p>ParentRecall includes controls intended to reduce privacy risk. These include:</p>
+<ul>
+<li>children are recorded by first name only;</li>
+<li>surnames of people added to the service are automatically shortened to three characters;</li>
+<li>parent/carer names are limited in length;</li>
+<li>no photographs or uploaded images are stored;</li>
+<li>avatars are illustrated configurations selected by the user;</li>
+<li>household lists are private and not searchable by others;</li>
+<li>there is no public directory, feed or social graph; and</li>
+<li>users can export or delete their account data.</li>
+</ul>
+<p>You must not attempt to bypass, disable, manipulate or work around these safeguards.</p>
+</section><section id="8-free-service-and-future-paid-features"><h2>8. Free service and future paid features</h2>
+<p>ParentRecall is currently provided free of charge.</p>
+<p>We may introduce optional paid features, paid plans, subscriptions, premium functionality, in-app purchases or other charges in the future. If we do this, we will make the relevant price, billing period, renewal terms, cancellation process and any additional terms clear before you are charged.</p>
+<p>We will not charge you for the current free service unless you actively choose to purchase a paid feature or plan and complete the required payment process.</p>
+<p>If paid features are made available through Apple App Store or Google Play, the relevant app store’s payment, cancellation and refund rules may also apply.</p>
+</section><section id="9-apple-app-store-and-google-play"><h2>9. Apple App Store and Google Play</h2>
+<p>If you download or use ParentRecall through Apple App Store or Google Play, your use of that app store is also governed by the applicable store terms.</p>
+<p>Apple and Google are not responsible for providing ParentRecall, maintaining the service, supporting the service, handling ParentRecall privacy requests, or resolving claims relating to ParentRecall except to the extent required by their own terms or applicable law.</p>
+<p>If there is a conflict between these Terms and mandatory Apple App Store or Google Play requirements, the relevant mandatory app store requirement will apply only to the extent necessary to resolve that conflict.</p>
+</section><section id="10-acceptable-use"><h2>10. Acceptable use</h2>
+<p>You must not:</p>
+<ul>
+<li>use ParentRecall for unlawful, harmful, abusive, discriminatory, intrusive or exploitative purposes;</li>
+<li>enter information that is false, defamatory, abusive, threatening, obscene or unlawful;</li>
+<li>use the service to stalk, monitor, profile, target, shame or harass anyone;</li>
+<li>attempt to access another household’s data;</li>
+<li>probe, scan, test, interfere with or bypass security controls;</li>
+<li>scrape, crawl, harvest, copy or extract data from the service;</li>
+<li>reverse engineer, decompile or attempt to derive source code from the service;</li>
+<li>use automated scripts, bots or high-volume requests without permission;</li>
+<li>upload malicious code or attempt to disrupt the service; or</li>
+<li>use ParentRecall in a way that breaches data protection, privacy or safeguarding laws.</li>
+</ul>
+</section><section id="11-your-content-and-licence-to-us"><h2>11. Your content and licence to us</h2>
+<p>The information you enter into ParentRecall remains your responsibility.</p>
+<p>You grant us a limited, worldwide, non-exclusive licence to host, store, process, transmit, back up and display that information solely as needed to provide, secure, support and improve ParentRecall for you and your household.</p>
+<p>We do not sell your household data and we do not use it for third-party advertising.</p>
+</section><section id="12-parentrecall-intellectual-property"><h2>12. ParentRecall intellectual property</h2>
+<p>ParentRecall, including its software, source code, user interface, designs, workflows, brand, logos, trade marks, text and other materials, is owned by Pacedall Labs Ltd or its licensors.</p>
+<p>These Terms do not transfer any ownership rights to you. You are granted a personal, limited, revocable, non-transferable right to use ParentRecall in accordance with these Terms.</p>
+</section><section id="13-service-availability-and-changes"><h2>13. Service availability and changes</h2>
+<p>We aim to keep ParentRecall reliable and available, but we do not guarantee that it will always be uninterrupted, secure, error-free or available at all times.</p>
+<p>We may update, improve, suspend, restrict or discontinue parts of the service. Where a material change negatively affects active users, we will try to give reasonable notice where practical.</p>
+<p>Because the service is currently free, we reserve the right to limit, suspend or discontinue free features where necessary to maintain, fund or protect the service.</p>
+</section><section id="14-disclaimers"><h2>14. Disclaimers</h2>
+<p>ParentRecall is a personal memory aid. It is not an official record, safeguarding system, school management system, contact database, emergency contact system, identity verification service or childcare management tool.</p>
+<p>You should not rely on ParentRecall as the only source of important information. You are responsible for checking important details directly with the relevant person, school, club, organiser or authority.</p>
+</section><section id="15-suspension-and-termination"><h2>15. Suspension and termination</h2>
+<p>You may stop using ParentRecall at any time and may delete your account through the account settings where available.</p>
+<p>We may suspend, restrict or terminate your access if we reasonably believe that you have breached these Terms, created risk for other people, misused the service, attempted to bypass security controls, or if we are required to do so by law.</p>
+<p>If we close the service entirely, we will aim to give reasonable notice and a reasonable opportunity to export your data where practical.</p>
+</section><section id="16-deletion-and-export"><h2>16. Deletion and export</h2>
+<p>ParentRecall aims to provide self-service data export and account deletion.</p>
+<p>When you delete your account, the data linked to that account will be deleted from live systems, subject to limited retained records needed for security, legal compliance, dispute handling or evidence that a deletion request was honoured.</p>
+<p>Backup copies may remain for a short period until overwritten in the normal backup cycle.</p>
+</section><section id="17-liability"><h2>17. Liability</h2>
+<p>Nothing in these Terms excludes or limits liability where it would be unlawful to do so, including liability for death or personal injury caused by negligence, fraud, fraudulent misrepresentation, or statutory rights that cannot be excluded.</p>
+<p>Subject to the above, ParentRecall is provided on a reasonable-efforts basis. We are not liable for indirect, consequential or special losses, loss of profit, loss of business, loss of goodwill, loss of data caused by your own actions, or losses arising from your misuse of the service.</p>
+<p>Because ParentRecall is currently free, our total liability to you in connection with the free service is limited to the maximum extent permitted by law.</p>
+</section><section id="18-consumer-rights"><h2>18. Consumer rights</h2>
+<p>Nothing in these Terms affects your statutory rights as a consumer.</p>
+<p>If ParentRecall later introduces paid features or subscriptions, the relevant consumer cancellation, renewal, refund and digital content rules will be set out at the point of purchase and in any additional paid-service terms.</p>
+</section><section id="19-changes-to-these-terms"><h2>19. Changes to these Terms</h2>
+<p>We may update these Terms from time to time. If we make material changes, we will update the “Last updated” date and, where appropriate, notify users through the website, app or email.</p>
+<p>Continuing to use ParentRecall after changes take effect means you accept the updated Terms.</p>
+</section><section id="20-governing-law-and-disputes"><h2>20. Governing law and disputes</h2>
+<p>These Terms are governed by the laws of England and Wales.</p>
+<p>The courts of England and Wales will have jurisdiction, except that if you live in Scotland, Northern Ireland or another part of the UK where mandatory consumer rules give you local rights, you may also bring proceedings in your local courts where required by law.</p>
+</section><section id="21-contact"><h2>21. Contact</h2>
+<p>Questions about these Terms should be sent to <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
+<p>You may also contact Pacedall Labs Ltd at its registered office: 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ.</p>
+</section>
+</main>
+<footer>
+  <p>© 2026 Pacedall Labs Ltd. ParentRecall is a product of Pacedall Labs Ltd.</p>
+  <p class="small">This document is intended for publication by ParentRecall. It should be reviewed by a qualified UK solicitor before launch or material product changes.</p>
+</footer>
 </body>
 </html>

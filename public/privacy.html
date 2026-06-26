@@ -1,128 +1,344 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-GB">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>Privacy Policy · ParentRecall</title>
-<meta name="description" content="How ParentRecall collects, uses, and protects your information — privacy-first by design."/>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-<style>
-  :root{--navy:#18306C;--orange:#F2641E;--teal:#0CA8A8;--muted:#5E6A86;--hair:#E7EBF3}
-  *{box-sizing:border-box}
-  html,body{margin:0;background:#F4F6FB;color:#33405E;font-family:Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.62}
-  a{color:var(--orange)}
-  .nav{background:#fff;border-bottom:1px solid var(--hair);position:sticky;top:0;z-index:5}
-  .nav .in{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 20px}
-  .wordmark{font-family:Poppins;font-weight:800;font-size:19px;color:var(--navy);text-decoration:none}
-  .wordmark span{color:var(--orange)}
-  .nav a.back{font-size:14px;font-weight:600;color:var(--muted);text-decoration:none}
-  .nav a.back:hover{color:var(--navy)}
-  .doc{max-width:760px;margin:0 auto;padding:34px 22px 56px}
-  .doc h1{font-family:Poppins;font-weight:800;font-size:clamp(26px,5vw,34px);color:var(--navy);letter-spacing:-.02em;margin:0 0 6px}
-  .eff{font-size:13.5px;color:var(--muted);margin:0 0 24px}
-  .doc h2{font-family:Poppins;font-weight:700;font-size:19px;color:var(--navy);margin:32px 0 10px}
-  .doc h3{font-family:Poppins;font-weight:700;font-size:15.5px;color:var(--navy);margin:18px 0 6px}
-  .doc p,.doc li{font-size:15px}
-  .doc ul{padding-left:20px;margin:8px 0}
-  .doc li{margin:5px 0}
-  .doc strong{color:var(--navy)}
-  .lead{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:16px 18px;margin:0 0 22px}
-  .lead p{margin:0;font-size:14.5px;color:var(--muted)}
-  .foot{border-top:1px solid var(--hair);background:#fff}
-  .foot .in{max-width:760px;margin:0 auto;padding:22px;font-size:13px;color:var(--muted)}
-  .foot a{color:var(--navy);text-decoration:none;font-weight:600;margin-right:16px}
-  .foot .co{margin-top:10px;line-height:1.5}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy Policy | ParentRecall</title>
+  <meta name="description" content="Privacy Policy for ParentRecall, operated by Pacedall Labs Ltd.">
+  <style>
+:root {
+  --bg:#fdf9f3;
+  --card:#ffffff;
+  --text:#17202a;
+  --muted:#5f6b75;
+  --brand:#0d1b2a;
+  --accent:#f46a1e;
+  --line:#e6ded2;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.65;
+}
+header{
+  background:var(--brand);
+  color:white;
+  padding:48px 20px;
+}
+.header-inner, main, footer{
+  max-width:980px;
+  margin:0 auto;
+}
+.kicker{
+  color:#ffd7aa;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  font-size:.82rem;
+}
+h1{
+  margin:.25rem 0 0;
+  font-size:clamp(2rem,5vw,3.25rem);
+  line-height:1.08;
+}
+.subtitle{
+  margin-top:12px;
+  max-width:780px;
+  color:#e8eef5;
+  font-size:1.05rem;
+}
+main{
+  background:var(--card);
+  margin-top:-22px;
+  padding:34px 22px 48px;
+  border-radius:18px 18px 0 0;
+  box-shadow:0 10px 28px rgba(13,27,42,.08);
+}
+.notice{
+  border-left:5px solid var(--accent);
+  background:#fff6ee;
+  padding:16px 18px;
+  border-radius:10px;
+  margin:22px 0 28px;
+}
+.summary{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+  margin:24px 0;
+}
+.summary div{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:16px;
+  background:#fffdf9;
+}
+nav.toc{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:18px 20px;
+  background:#fffdf9;
+  margin:28px 0;
+}
+nav.toc ol{margin:8px 0 0 20px;padding:0}
+nav.toc a{color:var(--brand);text-decoration:none}
+nav.toc a:hover{text-decoration:underline}
+h2{
+  color:var(--brand);
+  border-top:1px solid var(--line);
+  padding-top:28px;
+  margin-top:34px;
+  line-height:1.25;
+}
+h3{color:var(--brand);margin-top:26px}
+ul{padding-left:1.4rem}
+li{margin:.4rem 0}
+strong{color:#101820}
+.small, footer{
+  color:var(--muted);
+  font-size:.94rem;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin:18px 0;
+}
+th,td{
+  border:1px solid var(--line);
+  text-align:left;
+  vertical-align:top;
+  padding:10px 12px;
+}
+th{
+  background:#fff6ee;
+}
+footer{
+  padding:28px 20px 42px;
+}
+a{color:#0d4d8b}
+@media print{
+  header{background:white;color:black;padding:20px 0}
+  .subtitle,.kicker{color:black}
+  main{box-shadow:none;margin:0;padding:0}
+  a{text-decoration:none;color:black}
+}
 </style>
 </head>
 <body>
-  <nav class="nav"><div class="in">
-    <a class="wordmark" href="/">Parent<span>Recall</span></a>
-    <a class="back" href="/">&larr; Back to ParentRecall</a>
-  </div></nav>
-
-  <main class="doc">
+<header>
+  <div class="header-inner">
+    <a href="/" style="display:inline-block;margin-bottom:12px;color:#ffd7aa;text-decoration:none;font-weight:700;font-size:.9rem">&larr; Back to ParentRecall</a>
+    <div class="kicker">ParentRecall legal document</div>
     <h1>Privacy Policy</h1>
-    <p class="eff">Last updated: 22 June 2026</p>
-
-    <div class="lead"><p>ParentRecall is built to be private by design. It is a personal memory aid &mdash; not a social network. We don&rsquo;t sell your data, we don&rsquo;t show ads, and we never store photographs of children. This policy explains what we collect, why, and the control you have over it.</p></div>
-
-    <h2>1. Who we are</h2>
-    <p>ParentRecall is a service operated by <strong>Pacedall Labs Ltd</strong> (&ldquo;we&rdquo;, &ldquo;us&rdquo;), a company registered in England and Wales (company number 16619412), registered office 71&ndash;75 Shelton Street, Covent Garden, London, WC2H 9JQ. We are the data controller for the personal information described here, and we are registered with the UK Information Commissioner&rsquo;s Office (ICO) under reference <strong>ZB969483</strong> (registered 27 August 2025).</p>
-    <p>For any privacy question or request, contact us at <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
-
-    <h2>2. The information we collect</h2>
-    <h3>Account information</h3>
-    <p>When you create an account we collect your <strong>email address</strong>, a <strong>password</strong> (which we store only as a securely hashed value &mdash; we never see or store your actual password), and optionally a <strong>first name</strong> you choose to give.</p>
-    <h3>The information you add</h3>
-    <p>ParentRecall stores the information you enter to help you remember people, namely: your children&rsquo;s first names; the clubs and classes you set up; and, for each person you want to remember, their name (with surnames automatically shortened &mdash; see below), an optional description of who they are, optional parent/carer names, your own free-text memory notes, an optional birthday, and a <strong>cartoon avatar you build</strong>.</p>
-    <p><strong>We never collect or store photographs.</strong> There is no image upload anywhere in the product; faces are illustrated avatars generated from the options you pick.</p>
-    <h3>Please don&rsquo;t record sensitive information</h3>
-    <p>Your memory notes are free text. We ask that you <strong>do not enter special-category information</strong> &mdash; such as health, medical, religious, ethnic, sexual, or similar sensitive details &mdash; about yourself or anyone else. ParentRecall is a name-and-face memory aid and does not need it. If you choose to record such details, you do so for your own personal purposes and are responsible for that choice; we store the note only to provide the service to you and never use it for any other purpose.</p>
-    <h3>Technical information</h3>
-    <p>To keep the service secure and working we process limited technical data such as your IP address and request logs (for example to apply rate limits and detect abuse).</p>
-
-    <h2>3. Information about other people</h2>
-    <p>By its nature, ParentRecall lets you record limited details about other people &mdash; classmates, fellow parents, and coaches. We&rsquo;ve designed the product to minimise this:</p>
-    <ul>
-      <li><strong>Surnames are automatically shortened to two letters</strong> (for example &ldquo;John Smith&rdquo; is stored as &ldquo;John Sm&rdquo;).</li>
-      <li><strong>No photographs</strong> of anyone are ever stored.</li>
-      <li>Your lists are <strong>private to your household</strong> &mdash; there is no sharing, no directory, and no way for other users to find them.</li>
-    </ul>
-    <p>You should only record information you have a genuine personal reason to remember, and only what is necessary for that purpose. You can edit or delete any person&rsquo;s details at any time, and deleting your account removes all of it.</p>
-
-    <h2>4. How we use your information, and our lawful bases</h2>
-    <ul>
-      <li><strong>To provide the service</strong> &mdash; creating your account and storing the lists you build (lawful basis: performance of our contract with you).</li>
-      <li><strong>To send necessary account emails</strong> &mdash; email verification, password resets, and partner invitations (performance of our contract).</li>
-      <li><strong>To send optional birthday reminders</strong>, which you can turn off (lawful basis: our legitimate interest in a useful service, and your control over them).</li>
-      <li><strong>To keep the service secure and reliable</strong> &mdash; preventing abuse, debugging, and protecting accounts (legitimate interests).</li>
-    </ul>
-
-    <h2>5. Email</h2>
-    <p>We use <strong>Resend</strong> to deliver transactional emails (verification, password reset, partner invites, and optional reminders). We do not send marketing emails.</p>
-
-    <h2>6. Who we share information with</h2>
-    <p>We do <strong>not</strong> sell your personal information and we do <strong>not</strong> use it for advertising. We share it only with the service providers that help us run ParentRecall, and only as needed:</p>
-    <ul>
-      <li><strong>Railway</strong> &mdash; cloud hosting and database.</li>
-      <li><strong>Resend</strong> &mdash; sending the emails described above.</li>
-      <li><strong>Cloudflare</strong> &mdash; DNS, security, and content delivery.</li>
-      <li><strong>Zoho</strong> &mdash; our email inbox, used only if you contact us at team@parentrecall.com.</li>
-    </ul>
-    <p>We may also disclose information if required by law, or to protect our rights, users, or the public.</p>
-
-    <h2>7. International transfers</h2>
-    <p>Our hosting and database provider (Railway) stores and processes data on servers in the <strong>United States</strong>, and some other providers (such as Resend and Cloudflare) are also based outside the UK. Where personal data is transferred internationally, we rely on appropriate safeguards &mdash; such as the UK International Data Transfer Agreement, the UK Addendum to the EU Standard Contractual Clauses, or equivalent contractual protections &mdash; to keep it protected to UK standards.</p>
-
-    <h2>8. How long we keep it</h2>
-    <p>We keep your account and the information you add for as long as your account is open. When you delete your account (or a household admin deletes the household), we permanently remove the data from our live systems. Residual copies held in encrypted backups are overwritten on our normal backup cycle, within 30 days. After deletion we keep a <strong>minimal deletion record</strong> &mdash; the account email address and the dates the account was created, last accessed and deleted &mdash; for security, abuse-prevention, and to evidence that deletion requests were honoured. It contains no other personal information about you.</p>
-
-    <h2>9. How we protect it</h2>
-    <p>Connections are encrypted in transit (HTTPS). Passwords are hashed with bcrypt. Access to your data requires a signed authentication token, and each household&rsquo;s data is isolated so one account cannot read another&rsquo;s. No system is perfectly secure, but we take reasonable steps to protect your information.</p>
-
-    <h2>10. Family (household) accounts</h2>
-    <p>If you invite a partner to your account, they receive their own sign-in and can see and edit the same family lists. The account admin can remove the partner at any time; doing so revokes their access but keeps the shared information. If you are added as a partner, the admin of that household can see the information in it.</p>
-
-    <h2>11. Your rights</h2>
-    <p>Under UK data protection law you have the right to access, correct, delete, restrict, or object to our use of your personal information, and the right to data portability. You can exercise the main ones directly in the app: <strong>Account &rarr; Export my data</strong> downloads everything, and <strong>Delete account</strong> erases it. For a step-by-step guide (including how to request deletion if you can’t sign in), see <a href="/delete-account">parentrecall.com/delete-account</a>. For any other request, email <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
-    <p>If you have a concern we can&rsquo;t resolve, you can complain to the UK Information Commissioner&rsquo;s Office (ICO) at <a href="https://ico.org.uk" target="_blank" rel="noopener">ico.org.uk</a>.</p>
-
-    <h2>12. Children</h2>
-    <p>ParentRecall is intended for adults (parents and guardians) aged 18 or over. It is not directed at children and we do not knowingly allow children to create accounts. Information about children that appears in the app is entered by their parent or guardian for their own personal use.</p>
-
-    <h2>13. Cookies and local storage</h2>
-    <p>We don&rsquo;t use tracking or advertising cookies. To keep you signed in, the app stores a sign-in token in your browser. If you tick <strong>&ldquo;Keep me signed in on this device&rdquo;</strong> when logging in, it is kept in your browser&rsquo;s local storage so you stay signed in between visits; if you leave it unticked, it is kept only for the current session and cleared when you close the browser. A small amount of other data may also be stored locally. This all stays on your device, and signing out clears the sign-in token.</p>
-
-    <h2>14. Changes to this policy</h2>
-    <p>We may update this policy from time to time. When we make material changes we&rsquo;ll update the date at the top and, where appropriate, let you know in the app or by email.</p>
-
-    <h2>15. Contact</h2>
-    <p>Questions about this policy or your information? Email <a href="mailto:team@parentrecall.com">team@parentrecall.com</a> or call +44 20 3769 8842.</p>
-  </main>
-
-  <footer class="foot"><div class="in">
-    <div><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/delete-account">Delete account</a><a href="/">Home</a></div>
-    <div class="co">&copy; 2026 Pacedall Labs Ltd &mdash; registered in England &amp; Wales (company no. 16619412).<br/>Registered office: 71&ndash;75 Shelton Street, Covent Garden, London, WC2H 9JQ.<br/>ICO registration: ZB969483.<br/><a href="mailto:team@parentrecall.com">team@parentrecall.com</a> &middot; +44 20 3769 8842</div>
-  </div></footer>
+    <p class="subtitle">How ParentRecall collects, uses, protects and deletes personal information, including limited information entered about children and third parties.</p>
+  </div>
+</header>
+<main>
+  <p class="small"><strong>Last updated:</strong> 25 June 2026<br>
+  <strong>Operated by:</strong> Pacedall Labs Ltd, company number 16619412, registered in England and Wales.<br>
+  <strong>Registered office:</strong> 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ.<br>
+  <strong>ICO registration:</strong> ZB969483. <strong>Contact:</strong> <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
+  <div class="notice"><strong>Privacy-first design:</strong> ParentRecall is built to minimise personal information, especially information relating to children and third parties.</div>
+  <div class="summary"><div><strong>No photographs</strong><br>ParentRecall does not store uploaded photos or facial recognition data.</div>
+<div><strong>Private household data</strong><br>Lists are private to the account and invited partner. There is no public search or social network.</div>
+<div><strong>Data minimisation</strong><br>Children use first names only. Added surnames are shortened to three characters.</div></div>
+  <nav class="toc" aria-label="Table of contents">
+    <strong>Contents</strong>
+    <ol><li><a href="#1-overview">1. Overview</a></li>
+<li><a href="#2-who-we-are">2. Who we are</a></li>
+<li><a href="#3-information-we-collect">3. Information we collect</a></li>
+<li><a href="#4-information-we-do-not-collect">4. Information we do not collect</a></li>
+<li><a href="#5-privacy-by-design-measures">5. Privacy-by-design measures</a></li>
+<li><a href="#6-information-about-children-and-third-parties">6. Information about children and third parties</a></li>
+<li><a href="#7-how-we-use-personal-information">7. How we use personal information</a></li>
+<li><a href="#8-lawful-bases-under-uk-gdpr">8. Lawful bases under UK GDPR</a></li>
+<li><a href="#9-special-category-information">9. Special-category information</a></li>
+<li><a href="#10-cookies-local-storage-and-app-storage">10. Cookies, local storage and app storage</a></li>
+<li><a href="#11-emails-and-notifications">11. Emails and notifications</a></li>
+<li><a href="#12-service-providers">12. Service providers</a></li>
+<li><a href="#13-international-transfers">13. International transfers</a></li>
+<li><a href="#14-data-retention">14. Data retention</a></li>
+<li><a href="#15-account-deletion-and-data-export">15. Account deletion and data export</a></li>
+<li><a href="#16-security">16. Security</a></li>
+<li><a href="#17-your-rights">17. Your rights</a></li>
+<li><a href="#18-children-s-rights-and-best-interests">18. Children’s rights and best interests</a></li>
+<li><a href="#19-future-paid-services">19. Future paid services</a></li>
+<li><a href="#20-changes-to-this-privacy-policy">20. Changes to this Privacy Policy</a></li>
+<li><a href="#21-contact">21. Contact</a></li></ol>
+  </nav>
+  <section id="1-overview"><h2>1. Overview</h2>
+<p>This Privacy Policy explains how ParentRecall collects, uses, stores and protects personal information.</p>
+<p>ParentRecall is designed to be private by design. It does not store photographs, does not include public profiles, does not operate as a social network, does not sell personal data and does not use advertising trackers.</p>
+<p>The service does, however, allow adult users to record limited information about people connected to their child’s school, clubs or activities. That can include information about children and adults. For that reason, we treat privacy and data minimisation as central product requirements.</p>
+</section><section id="2-who-we-are"><h2>2. Who we are</h2>
+<p>ParentRecall is operated by Pacedall Labs Ltd, a company registered in England and Wales under company number 16619412.</p>
+<p>Registered office: 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ.</p>
+<p>ICO registration: ZB969483.</p>
+<p>For privacy questions or requests, contact <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
+<p>For the personal information described in this policy, Pacedall Labs Ltd is generally the data controller. In practice, this means we decide how ParentRecall operates and how data is processed within the service.</p>
+</section><section id="3-information-we-collect"><h2>3. Information we collect</h2>
+<h3>Account information</h3>
+<ul>
+<li>email address;</li>
+<li>password, stored only as a secure hash and not in plain text;</li>
+<li>optional first name or account name;</li>
+<li>email verification and password reset information;</li>
+<li>account status, creation date, login information and deletion status.</li>
+</ul>
+<h3>Household information entered by users</h3>
+<ul>
+<li>children’s first names only;</li>
+<li>clubs, classes or activity names and optional schedule notes;</li>
+<li>people added by the user, including first name and a surname shortened to three characters;</li>
+<li>optional role or description, such as “Oscar’s mum” or “football coach”;</li>
+<li>optional parent/carer names, limited in length;</li>
+<li>optional birthday reminders;</li>
+<li>free-text memory notes entered by the user;</li>
+<li>illustrated avatar configuration selected by the user.</li>
+</ul>
+<h3>Technical and security information</h3>
+<ul>
+<li>IP address;</li>
+<li>device, browser and request logs;</li>
+<li>authentication tokens and session information;</li>
+<li>rate-limiting, security and error logs;</li>
+<li>basic operational analytics needed to keep the service working.</li>
+</ul>
+</section><section id="4-information-we-do-not-collect"><h2>4. Information we do not collect</h2>
+<p>ParentRecall does not intentionally collect or store:</p>
+<ul>
+<li>photographs of children, parents, coaches or other people;</li>
+<li>uploaded images;</li>
+<li>biometric data;</li>
+<li>facial recognition data;</li>
+<li>public social profiles;</li>
+<li>public posts, comments, messages or feeds;</li>
+<li>payment data while the service remains free;</li>
+<li>advertising tracking data;</li>
+<li>data for sale to advertisers or data brokers.</li>
+</ul>
+<p>Users are asked not to enter special-category information such as health, medical, disability, religion, ethnicity, political opinion or similar sensitive information in free-text notes.</p>
+</section><section id="5-privacy-by-design-measures"><h2>5. Privacy-by-design measures</h2>
+<p>ParentRecall includes privacy controls intended to reduce the amount and sensitivity of data stored. These include:</p>
+<ul>
+<li>children are recorded by first name only;</li>
+<li>surnames of added people are automatically shortened to three characters;</li>
+<li>parent/carer names are capped in length;</li>
+<li>no photograph upload feature exists;</li>
+<li>avatars are illustrated and selected from options rather than generated from real faces;</li>
+<li>household data is private to the account and invited partner;</li>
+<li>there is no user search, public directory, feed, messaging system or social graph;</li>
+<li>users can edit, export and delete data;</li>
+<li>account deletion is available from the account area where supported.</li>
+</ul>
+</section><section id="6-information-about-children-and-third-parties"><h2>6. Information about children and third parties</h2>
+<p>ParentRecall is used by adults. Children should not create accounts.</p>
+<p>Adults may enter limited information about children or other adults where they have a genuine personal or household reason to remember that information. For example, a parent may want to remember a child’s classmate’s first name or the name of another parent at school pick-up.</p>
+<p>We recognise that these people may not have created an account or directly provided the information themselves. To reduce privacy impact, ParentRecall limits the type of information that can be stored, does not store photos, keeps data private to the household and allows the account holder to delete information.</p>
+<p>Users are responsible for making sure that information they enter is fair, limited, accurate where necessary, and not excessive or intrusive.</p>
+</section><section id="7-how-we-use-personal-information"><h2>7. How we use personal information</h2>
+<p>We use personal information to:</p>
+<ul>
+<li>create, authenticate and manage accounts;</li>
+<li>provide the ParentRecall service and display household lists back to the user;</li>
+<li>enable household partner invitations and permissions;</li>
+<li>send transactional emails, such as verification, password reset, partner invite and optional reminder emails;</li>
+<li>maintain security, prevent abuse and protect accounts;</li>
+<li>debug errors and maintain service reliability;</li>
+<li>support data export and deletion;</li>
+<li>respond to user enquiries;</li>
+<li>comply with legal obligations and protect legal rights.</li>
+</ul>
+<p>We do not sell personal information and do not use household information for third-party advertising.</p>
+</section><section id="8-lawful-bases-under-uk-gdpr"><h2>8. Lawful bases under UK GDPR</h2>
+<p>We rely on different lawful bases depending on the processing activity:</p>
+<table>
+<thead><tr><th>Purpose</th><th>Lawful basis</th></tr></thead>
+<tbody>
+<tr><td>Creating and managing your account</td><td>Performance of a contract with you</td></tr>
+<tr><td>Storing and displaying the information you enter</td><td>Performance of a contract with you and our legitimate interests in providing a private memory-aid service</td></tr>
+<tr><td>Processing limited third-party information entered by users</td><td>Legitimate interests, balanced against the rights and freedoms of the people concerned, supported by privacy-by-design controls</td></tr>
+<tr><td>Transactional emails</td><td>Performance of a contract and legitimate interests</td></tr>
+<tr><td>Optional reminders</td><td>Legitimate interests, with user control to disable reminders</td></tr>
+<tr><td>Security, fraud prevention, rate limiting and abuse detection</td><td>Legitimate interests</td></tr>
+<tr><td>Legal compliance</td><td>Legal obligation</td></tr>
+</tbody>
+</table>
+<p>Where we rely on legitimate interests, we consider the nature of the service, the limited data collected, the privacy controls in place, user expectations, and the rights of children and third parties.</p>
+</section><section id="9-special-category-information"><h2>9. Special-category information</h2>
+<p>ParentRecall does not need special-category information and users are instructed not to enter it.</p>
+<p>Special-category information includes details about health, medical conditions, disability, ethnicity, religion, political opinions, trade union membership, genetics, biometrics used for identification, sex life or sexual orientation.</p>
+<p>If a user chooses to enter such information in free-text notes despite this instruction, it is entered for that user’s own personal purposes. We do not ask for it, do not require it, and do not use it for profiling, advertising or separate analysis.</p>
+</section><section id="10-cookies-local-storage-and-app-storage"><h2>10. Cookies, local storage and app storage</h2>
+<p>ParentRecall uses essential cookies, local storage, app storage or similar technologies to keep users signed in, maintain sessions, protect accounts and provide core functionality.</p>
+<p>We do not use advertising cookies. If non-essential analytics or marketing cookies are introduced in the future, we will update our Cookie Policy and request consent where required.</p>
+</section><section id="11-emails-and-notifications"><h2>11. Emails and notifications</h2>
+<p>We may send necessary service emails such as email verification, password resets, partner invitations, security notices and account-related messages.</p>
+<p>Users may also choose to receive optional birthday or reminder emails where the feature is enabled. These can be disabled where the product provides that control.</p>
+<p>We do not currently send marketing emails. If marketing emails are introduced in the future, users will be given appropriate notice and opt-in or opt-out choices as required by law.</p>
+</section><section id="12-service-providers"><h2>12. Service providers</h2>
+<p>We use a limited number of providers to operate ParentRecall. These may include:</p>
+<table>
+<thead><tr><th>Provider</th><th>Role</th></tr></thead>
+<tbody>
+<tr><td>Railway</td><td>Cloud hosting, application infrastructure and database hosting</td></tr>
+<tr><td>Cloudflare</td><td>DNS, security, performance and content delivery</td></tr>
+<tr><td>Resend</td><td>Transactional email delivery</td></tr>
+<tr><td>Zoho</td><td>Support inbox and business email where users contact us</td></tr>
+<tr><td>Apple</td><td>App distribution, platform services and payment handling if paid iOS features are introduced</td></tr>
+<tr><td>Google</td><td>App distribution, platform services and payment handling if paid Android features are introduced</td></tr>
+</tbody>
+</table>
+<p>We require providers to process personal information only as needed to provide their services to us and to protect it appropriately.</p>
+</section><section id="13-international-transfers"><h2>13. International transfers</h2>
+<p>Some providers may process personal data outside the UK, including in the United States.</p>
+<p>Where personal information is transferred internationally, we rely on appropriate safeguards where required, such as the UK International Data Transfer Agreement, the UK Addendum to the EU Standard Contractual Clauses, adequacy regulations, supplier transfer mechanisms, or equivalent protections recognised under UK data protection law.</p>
+</section><section id="14-data-retention"><h2>14. Data retention</h2>
+<p>We keep account data and user-entered household information for as long as the account remains active, unless deleted earlier by the user or removed by us under these policies.</p>
+<p>When an account is deleted, we delete associated live account and household data, subject to limited records needed for legal, security, abuse-prevention or deletion-evidence purposes.</p>
+<p>Residual copies may remain in encrypted backups until overwritten in the normal backup cycle. The intended backup overwrite period is up to 30 days unless technical, legal or security reasons require otherwise.</p>
+</section><section id="15-account-deletion-and-data-export"><h2>15. Account deletion and data export</h2>
+<p>Where available, users can export their data and delete their account from within ParentRecall.</p>
+<p>If you cannot access your account, you can contact us at <a href="mailto:team@parentrecall.com">team@parentrecall.com</a> to request deletion or assistance.</p>
+<p>For security, we may need to verify your identity before actioning a request.</p>
+</section><section id="16-security"><h2>16. Security</h2>
+<p>ParentRecall uses reasonable technical and organisational measures to protect personal information. These include HTTPS encryption, password hashing, authentication controls, scoped database access, rate limiting, security headers and restricted administrative access.</p>
+<p>No digital service is perfectly secure. Users should use strong passwords, keep devices secure and tell us promptly if they suspect unauthorised access.</p>
+</section><section id="17-your-rights"><h2>17. Your rights</h2>
+<p>Under UK data protection law, you may have rights to:</p>
+<ul>
+<li>access your personal information;</li>
+<li>correct inaccurate information;</li>
+<li>delete personal information;</li>
+<li>restrict processing;</li>
+<li>object to certain processing;</li>
+<li>receive a portable copy of data you provided;</li>
+<li>complain to the ICO.</li>
+</ul>
+<p>You can exercise key rights through export and deletion tools where available, or by contacting <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
+<p>You can complain to the UK Information Commissioner’s Office at <a href="https://ico.org.uk" rel="noopener">ico.org.uk</a>.</p>
+</section><section id="18-children-s-rights-and-best-interests"><h2>18. Children’s rights and best interests</h2>
+<p>ParentRecall is not directed at children and children should not create accounts.</p>
+<p>Because users may enter limited information about children, we aim to take children’s privacy seriously. The service is designed to minimise children’s data, avoid photographs, avoid public sharing, avoid social discovery and keep household information private.</p>
+<p>If you believe information about a child has been entered inappropriately, please contact us at <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
+</section><section id="19-future-paid-services"><h2>19. Future paid services</h2>
+<p>ParentRecall is currently free and does not currently collect payment card data.</p>
+<p>If we introduce paid features, subscriptions or in-app purchases in the future, payment may be handled by Apple, Google, Stripe or another payment provider. We will update this policy where required and explain what payment-related data is processed.</p>
+<p>We do not intend to store full payment card details ourselves.</p>
+</section><section id="20-changes-to-this-privacy-policy"><h2>20. Changes to this Privacy Policy</h2>
+<p>We may update this Privacy Policy as ParentRecall changes or legal requirements evolve.</p>
+<p>If we make material changes, we will update the “Last updated” date and, where appropriate, notify users through the website, app or email.</p>
+</section><section id="21-contact"><h2>21. Contact</h2>
+<p>Privacy questions and requests should be sent to <a href="mailto:team@parentrecall.com">team@parentrecall.com</a>.</p>
+<p>You can also contact Pacedall Labs Ltd at 71–75 Shelton Street, Covent Garden, London, WC2H 9JQ.</p>
+</section>
+</main>
+<footer>
+  <p>© 2026 Pacedall Labs Ltd. ParentRecall is a product of Pacedall Labs Ltd.</p>
+  <p class="small">This document is intended for publication by ParentRecall. It should be reviewed by a qualified UK solicitor before launch or material product changes.</p>
+</footer>
 </body>
 </html>

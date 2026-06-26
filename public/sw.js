@@ -3,12 +3,13 @@
    - API GETs: network-first with cache fallback (fresh when online, readable offline).
    - API writes (POST/PUT/DELETE): network only, never cached.
    Bump the cache version on each release to force a clean refresh. */
-const SHELL_CACHE = 'parentrecall-shell-v4';
-const API_CACHE = 'parentrecall-api-v4';
+const SHELL_CACHE = 'parentrecall-shell-v7';
+const API_CACHE = 'parentrecall-api-v7';
 const SHELL = [
   '/', '/index.html', '/styles.css', '/app.js', '/logo.png',
   '/icon-192.png', '/icon-512.png', '/manifest.json',
-  '/vendor/xlsx.full.min.js', '/vendor/dicebear.js'
+  '/vendor/xlsx.full.min.js', '/vendor/dicebear.js',
+  '/icon-maskable-192.png', '/icon-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {

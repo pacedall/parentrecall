@@ -346,3 +346,9 @@ input.f:focus-visible,textarea.f:focus-visible,.selectpill select:focus-visible{
 /* Report-abuse chip (feedback sheet) */
 .chip.danger{color:#B42318;border-color:#F3C0BA}
 .chip.danger.sel{background:#B42318;border-color:#B42318;color:#fff}
+
+/* Signup consent checkbox */
+.agreebox{display:flex;gap:10px;align-items:flex-start;margin:6px 2px 14px;font-size:13px;font-weight:400;color:var(--muted);text-align:left;line-height:1.5;text-transform:none;letter-spacing:normal}
+.agreebox input{margin-top:2px;flex:0 0 auto;width:17px;height:17px;accent-color:var(--navy)}
+.agreebox a{color:var(--navy);font-weight:600;text-decoration:underline}
+.save:disabled{opacity:.5;cursor:not-allowed}

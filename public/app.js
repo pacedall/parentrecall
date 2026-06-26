@@ -260,7 +260,7 @@
 
         '<footer class="lfoot">' +
           '<span class="wordmark">Parent<span>Recall</span></span>' +
-          '<div class="lfootlinks"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/delete-account">Delete account</a><a href="#" id="lFeedback">Feedback</a><a href="mailto:team@parentrecall.com">Contact</a></div>' +
+          '<div class="lfootlinks"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a><a href="/delete-account">Delete account</a><a href="#" id="lFeedback">Feedback</a><a href="mailto:team@parentrecall.com">Contact</a></div>' +
           '<p>A Pacedall Labs product. \u00a9 2026.</p>' +
         '</footer>' +
       '</div>';
@@ -305,9 +305,10 @@
           '<div class="pwwrap"><input class="f" id="a_pass" type="password" placeholder="' + (isLogin ? 'Your password' : '8+ characters') + '" autocomplete="' + (isLogin ? 'current-password' : 'new-password') + '"/><button type="button" class="pweye" data-eye="a_pass" aria-label="Show password" tabindex="-1">' + ICON.eye + '</button></div>' +
           (isLogin ? '' : '<p class="hint pwreq">Use 8 or more characters, with letters, at least one number, and at least two symbols.</p>') +
           (isLogin ? '<label class="keepme"><input type="checkbox" id="keepSignedIn" checked/><span>Keep me signed in on this device</span></label>' : '') +
+          (isLogin ? '' : '<label class="agreebox"><input type="checkbox" id="a_agree"/><span>I have read and agree to the <a href="/terms" target="_blank" rel="noopener">Terms &amp; Conditions</a>, <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a> and <a href="/cookies" target="_blank" rel="noopener">Cookie Policy</a>.</span></label>') +
           '<button class="save" id="authBtn" type="submit">' + (isLogin ? 'Sign in' : 'Create account') + '</button>' +
         '</form>' +
-        (isLogin ? '' : '<p class="agree">By creating an account you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.</p>') +
+        
         (isLogin ? '<div class="toggle" style="margin-top:14px"><button id="forgotLink" type="button">Forgot password?</button></div>' : '') +
         '<div class="toggle">' + (isLogin ? "New here? " : 'Already have an account? ') +
           '<button id="authToggle" type="button">' + (isLogin ? 'Create an account' : 'Sign in') + '</button>' +
@@ -317,6 +318,8 @@
 
     el('authToggle').onclick = function () { renderAuth(isLogin ? 'register' : 'login'); };
     el('authHome').onclick = function () { renderLanding(); };
+    var agreeBox = el('a_agree');
+    if (agreeBox) { el('authBtn').disabled = true; agreeBox.onchange = function () { el('authBtn').disabled = !agreeBox.checked; }; }
     var fl = el('forgotLink'); if (fl) fl.onclick = function () { renderForgot(el('a_email') ? el('a_email').value.trim() : ''); };
     el('authForm').onsubmit = function (e) {
       e.preventDefault();
@@ -324,9 +327,11 @@
       var email = el('a_email').value.trim();
       var pass = el('a_pass').value;
       var name = isLogin ? '' : (el('a_name') ? el('a_name').value.trim() : '');
+      var accepted = el('a_agree') ? el('a_agree').checked : true;
+      if (!isLogin && !accepted) { return; }
       if (!isLogin) { var pe = clientPwError(pass); if (pe) { renderAuth(mode, pe); return; } }
       btn.disabled = true; btn.textContent = 'Please wait…';
-      api(isLogin ? '/auth/login' : '/auth/register', { method: 'POST', body: { email: email, password: pass, name: name } })
+      api(isLogin ? '/auth/login' : '/auth/register', { method: 'POST', body: { email: email, password: pass, name: name, acceptedTerms: accepted } })
         .then(function (data) {
           token = data.token; me = data.user;
           var keep = el('keepSignedIn');
@@ -1062,7 +1067,7 @@
       '<button class="rowbtn" id="acSignout">Sign out</button>' +
       (admin ? '<button class="danger" id="acDelete">Delete this account</button>' : '') +
       '<button class="cancel" id="cancelBtn">Close</button>' +
-      '<p class="sheetlegal"><a href="/privacy" target="_blank" rel="noopener">Privacy</a> \u00b7 <a href="/terms" target="_blank" rel="noopener">Terms</a> \u00b7 <a href="/delete-account" target="_blank" rel="noopener">Delete account</a> \u00b7 <a href="mailto:team@parentrecall.com">Contact</a></p>';
+      '<p class="sheetlegal"><a href="/privacy" target="_blank" rel="noopener">Privacy</a> \u00b7 <a href="/terms" target="_blank" rel="noopener">Terms</a> \u00b7 <a href="/cookies" target="_blank" rel="noopener">Cookies</a> \u00b7 <a href="/delete-account" target="_blank" rel="noopener">Delete account</a> \u00b7 <a href="mailto:team@parentrecall.com">Contact</a></p>';
     show();
     el('cancelBtn').onclick = hide;
     el('acSignout').onclick = function () { hide(); signOut(); };

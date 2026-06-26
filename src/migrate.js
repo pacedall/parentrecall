@@ -42,6 +42,12 @@ async function migrate() {
     // ignore
   }
   try {
+    await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ');
+    await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_version TEXT');
+  } catch (e) {
+    // ignore — columns already exist or engine lacks ADD COLUMN IF NOT EXISTS
+  }
+  try {
     await backfillHouseholds();
   } catch (e) {
     console.error('household backfill skipped:', e.message);

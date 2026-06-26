@@ -18,6 +18,9 @@ const authLimiter = rateLimit({
 });
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Policy version recorded against each registration. Bump when the Terms,
+// Privacy Policy or Cookie Policy change materially.
+const TERMS_VERSION = '2026-06-25';
 const VERIFY_TTL_MIN = 60 * 24;   // 24 hours
 const RESET_TTL_MIN = 60;         // 1 hour
 
@@ -74,16 +77,18 @@ router.post('/register', authLimiter, async (req, res) => {
   const email = (req.body.email || '').trim().toLowerCase();
   const password = req.body.password || '';
   const name = (req.body.name || '').trim();
+  const accepted = req.body.acceptedTerms === true || req.body.acceptedTerms === 'true';
 
   if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
   const pwErr = validatePassword(password, email);
   if (pwErr) return res.status(400).json({ error: pwErr });
+  if (!accepted) return res.status(400).json({ error: 'Please accept the Terms, Privacy Policy and Cookie Policy to create an account.' });
 
   try {
     const hash = await bcrypt.hash(password, 12);
     const { rows } = await db.query(
-      'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id, email, name, email_verified',
-      [email, hash, name]
+      'INSERT INTO users (email, password_hash, name, terms_accepted_at, terms_version) VALUES ($1, $2, $3, now(), $4) RETURNING id, email, name, email_verified',
+      [email, hash, name, TERMS_VERSION]
     );
     const user = rows[0];
     // new sign-ups own a fresh household as admin

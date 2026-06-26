@@ -44,6 +44,10 @@ app.use(express.static(publicDir));
 app.get('/privacy', (req, res) => res.sendFile(path.join(publicDir, 'privacy.html')));
 app.get('/terms', (req, res) => res.sendFile(path.join(publicDir, 'terms.html')));
 app.get('/delete-account', (req, res) => res.sendFile(path.join(publicDir, 'delete-account.html')));
+app.get('/cookies', (req, res) => res.sendFile(path.join(publicDir, 'cookies.html')));
+app.get('/cookie-policy', (req, res) => res.sendFile(path.join(publicDir, 'cookies.html')));
+app.get('/privacy-policy', (req, res) => res.sendFile(path.join(publicDir, 'privacy.html')));
+app.get('/terms-and-conditions', (req, res) => res.sendFile(path.join(publicDir, 'terms.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(publicDir, 'admin.html')));
 app.get('/data-deletion', (req, res) => res.sendFile(path.join(publicDir, 'delete-account.html')));
 
