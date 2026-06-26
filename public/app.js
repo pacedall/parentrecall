@@ -285,6 +285,18 @@
     return null;
   }
 
+  function bindPwEyes() {
+    Array.prototype.forEach.call(document.querySelectorAll('.pweye'), function (b) {
+      b.onclick = function () {
+        var inp = el(b.getAttribute('data-eye')); if (!inp) return;
+        var show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        b.innerHTML = show ? ICON.eyeOff : ICON.eye;
+        b.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+      };
+    });
+  }
+
   function renderAuth(mode, errMsg) {
     leaveLanding();
     mode = mode || 'login';
@@ -340,6 +352,7 @@
         })
         .catch(function (err) { renderAuth(mode, err.message); });
     };
+    bindPwEyes();
     setTimeout(function () { var f = el(isLogin ? 'a_email' : 'a_email'); if (f) f.focus(); }, 60);
   }
 
@@ -414,6 +427,7 @@
         .then(function () { renderAuth('login'); toast('Password updated — please sign in.'); })
         .catch(function (err) { renderReset(resetToken, err.message); });
     };
+    bindPwEyes();
     setTimeout(function () { var f = el('rp_pass'); if (f) f.focus(); }, 60);
   }
 
@@ -1338,7 +1352,7 @@
     var editChild = el('editChild'); if (editChild) editChild.onclick = sheetEditChild;
     var editClub = el('editClub'); if (editClub) editClub.onclick = sheetEditClub;
     var clubSwitch = el('clubSwitch'); if (clubSwitch) clubSwitch.onchange = function () { var id = this.value; if (!id || id === state.clubId) return; state.clubId = id; loadPeople(id).then(function () { render(); window.scrollTo(0, 0); }); };
-    Array.prototype.forEach.call(document.querySelectorAll('.pweye'), function (b) { b.onclick = function () { var inp = el(b.getAttribute('data-eye')); if (!inp) return; var show = inp.type === 'password'; inp.type = show ? 'text' : 'password'; b.innerHTML = show ? ICON.eyeOff : ICON.eye; b.setAttribute('aria-label', show ? 'Hide password' : 'Show password'); }; });
+    bindPwEyes();
     var pasteList = el('pasteList'); if (pasteList) pasteList.onclick = sheetPasteList;
     var importList = el('importList'); if (importList) importList.onclick = sheetImport;
     var printBtn = el('printBtn'); if (printBtn) printBtn.onclick = printClub;
