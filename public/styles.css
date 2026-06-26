@@ -352,3 +352,13 @@ input.f:focus-visible,textarea.f:focus-visible,.selectpill select:focus-visible{
 .agreebox input{margin-top:2px;flex:0 0 auto;width:17px;height:17px;accent-color:var(--navy)}
 .agreebox a{color:var(--navy);font-weight:600;text-decoration:underline}
 .save:disabled{opacity:.5;cursor:not-allowed}
+
+/* Reorder sheet (children / clubs) */
+.relist{display:flex;flex-direction:column;gap:8px;margin:8px 0 16px}
+.rerow{display:flex;align-items:center;gap:10px;background:#F4F6FB;border:1px solid var(--hair);border-radius:12px;padding:10px 12px}
+.rerank{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.rename{flex:1 1 auto;font-weight:600;color:var(--navy);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resub{font-weight:400;color:var(--muted);font-size:13px}
+.rebtns{flex:0 0 auto;display:flex;gap:6px}
+.rebtn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--hair);background:#fff;border-radius:10px;color:var(--navy);cursor:pointer}
+.rebtn:disabled{opacity:.35;cursor:not-allowed}

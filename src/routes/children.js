@@ -14,8 +14,8 @@ router.get('/', async (req, res) => {
      FROM children c
      LEFT JOIN clubs cl ON cl.child_id = c.id
      WHERE c.household_id = $1
-     GROUP BY c.id, c.name, c.is_demo, c.created_at
-     ORDER BY c.created_at ASC, c.id ASC`,
+     GROUP BY c.id, c.name, c.is_demo, c.created_at, c.sort_order
+     ORDER BY c.sort_order ASC NULLS LAST, c.created_at ASC, c.id ASC`,
     [req.householdId]
   );
   res.json(rows);
@@ -26,10 +26,26 @@ router.post('/', requireAdmin, async (req, res) => {
   const name = (req.body.name || '').trim();
   if (!name) return res.status(400).json({ error: 'A name is needed.' });
   const { rows } = await db.query(
-    'INSERT INTO children (household_id, user_id, name) VALUES ($1, $2, $3) RETURNING id, name',
+    'INSERT INTO children (household_id, user_id, name, sort_order) ' +
+    'VALUES ($1, $2, $3, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM children WHERE household_id = $1)) ' +
+    'RETURNING id, name',
     [req.householdId, req.userId, name]
   );
   res.status(201).json(rows[0]);
+});
+
+// Reorder the household's children (admin only). Body: { order: [id, id, ...] }.
+router.post('/reorder', requireAdmin, async (req, res) => {
+  const order = Array.isArray(req.body.order) ? req.body.order : [];
+  if (!order.length) return res.status(400).json({ error: 'An order is required.' });
+  const { rows } = await db.query('SELECT id FROM children WHERE household_id = $1', [req.householdId]);
+  const owned = new Set(rows.map(function (r) { return r.id; }));
+  const ids = order.map(function (n) { return parseInt(n, 10); }).filter(function (n) { return owned.has(n); });
+  if (!ids.length) return res.status(400).json({ error: 'No valid children to reorder.' });
+  for (let i = 0; i < ids.length; i++) {
+    await db.query('UPDATE children SET sort_order = $1 WHERE id = $2 AND household_id = $3', [i + 1, ids[i], req.householdId]);
+  }
+  res.json({ ok: true });
 });
 
 router.put('/:id', requireAdmin, async (req, res) => {

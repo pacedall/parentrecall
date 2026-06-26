@@ -22,8 +22,8 @@ router.get('/', async (req, res) => {
      FROM clubs cl
      LEFT JOIN people p ON p.club_id = cl.id
      WHERE cl.household_id = $1 AND cl.child_id = $2
-     GROUP BY cl.id, cl.child_id, cl.name, cl.sub, cl.color, cl.created_at
-     ORDER BY cl.created_at ASC, cl.id ASC`,
+     GROUP BY cl.id, cl.child_id, cl.name, cl.sub, cl.color, cl.created_at, cl.sort_order
+     ORDER BY cl.sort_order ASC NULLS LAST, cl.created_at ASC, cl.id ASC`,
     [req.householdId, childId]
   );
   res.json(rows);
@@ -47,12 +47,32 @@ router.post('/', async (req, res) => {
   }
 
   const { rows } = await db.query(
-    `INSERT INTO clubs (household_id, user_id, child_id, name, sub, color)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO clubs (household_id, user_id, child_id, name, sub, color, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM clubs WHERE child_id = $3))
      RETURNING id, child_id, name, sub, color`,
     [req.householdId, req.userId, childId, name, sub, color]
   );
   res.status(201).json({ ...rows[0], people_count: 0 });
+});
+
+// Reorder a child's clubs (both roles). Body: { childId, order: [id, id, ...] }.
+router.post('/reorder', async (req, res) => {
+  const childId = parseInt(req.body.childId, 10);
+  const order = Array.isArray(req.body.order) ? req.body.order : [];
+  if (!childId) return res.status(400).json({ error: 'childId is required.' });
+  if (!order.length) return res.status(400).json({ error: 'An order is required.' });
+
+  const owns = await db.query('SELECT 1 FROM children WHERE id = $1 AND household_id = $2', [childId, req.householdId]);
+  if (!owns.rows[0]) return res.status(404).json({ error: 'Child not found.' });
+
+  const { rows } = await db.query('SELECT id FROM clubs WHERE child_id = $1 AND household_id = $2', [childId, req.householdId]);
+  const owned = new Set(rows.map(function (r) { return r.id; }));
+  const ids = order.map(function (n) { return parseInt(n, 10); }).filter(function (n) { return owned.has(n); });
+  if (!ids.length) return res.status(400).json({ error: 'No valid clubs to reorder.' });
+  for (let i = 0; i < ids.length; i++) {
+    await db.query('UPDATE clubs SET sort_order = $1 WHERE id = $2 AND household_id = $3', [i + 1, ids[i], req.householdId]);
+  }
+  res.json({ ok: true });
 });
 
 // Edit a club (both roles)

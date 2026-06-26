@@ -44,8 +44,27 @@ async function migrate() {
   try {
     await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ');
     await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS terms_version TEXT');
+    await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_count INTEGER NOT NULL DEFAULT 0');
+    await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS lock_until TIMESTAMPTZ');
+    await db.query('ALTER TABLE children ADD COLUMN IF NOT EXISTS sort_order INTEGER');
+    await db.query('ALTER TABLE clubs ADD COLUMN IF NOT EXISTS sort_order INTEGER');
   } catch (e) {
     // ignore — columns already exist or engine lacks ADD COLUMN IF NOT EXISTS
+  }
+  // Backfill ordering for rows created before sort_order existed, using created order.
+  try {
+    await db.query(
+      "UPDATE children c SET sort_order = s.rn FROM " +
+      "(SELECT id, ROW_NUMBER() OVER (PARTITION BY household_id ORDER BY created_at, id) AS rn FROM children) s " +
+      "WHERE c.id = s.id AND c.sort_order IS NULL"
+    );
+    await db.query(
+      "UPDATE clubs c SET sort_order = s.rn FROM " +
+      "(SELECT id, ROW_NUMBER() OVER (PARTITION BY child_id ORDER BY created_at, id) AS rn FROM clubs) s " +
+      "WHERE c.id = s.id AND c.sort_order IS NULL"
+    );
+  } catch (e) {
+    // ignore — engine may lack window functions (handled fine in real Postgres)
   }
   try {
     await backfillHouseholds();

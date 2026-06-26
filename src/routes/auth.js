@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const rateLimit = require('express-rate-limit');
 const db = require('../db');
-const { sign, requireAuth, loadHousehold, requireAdmin } = require('../middleware/auth');
+const { sign, issueSession, requireAuth, loadHousehold, requireAdmin } = require('../middleware/auth');
 const { validatePassword } = require('../password');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../mailer');
 
@@ -21,11 +21,16 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Policy version recorded against each registration. Bump when the Terms,
 // Privacy Policy or Cookie Policy change materially.
 const TERMS_VERSION = '2026-06-25';
+// Per-email failed-login lockout: after this many consecutive failures the
+// account is locked for LOGIN_LOCK_MIN minutes (password reset still works).
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCK_MIN = 15;
 const VERIFY_TTL_MIN = 60 * 24;   // 24 hours
 const RESET_TTL_MIN = 60;         // 1 hour
 
 function publicUser(row) {
-  return { id: row.id, email: row.email, name: row.name, email_verified: !!row.email_verified };
+  return { id: row.id, email: row.email, name: row.name, email_verified: !!row.email_verified,
+    termsCurrent: row.terms_version === TERMS_VERSION };
 }
 
 function baseUrl(req) {
@@ -87,7 +92,7 @@ router.post('/register', authLimiter, async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 12);
     const { rows } = await db.query(
-      'INSERT INTO users (email, password_hash, name, terms_accepted_at, terms_version) VALUES ($1, $2, $3, now(), $4) RETURNING id, email, name, email_verified',
+      'INSERT INTO users (email, password_hash, name, terms_accepted_at, terms_version) VALUES ($1, $2, $3, now(), $4) RETURNING id, email, name, email_verified, terms_version',
       [email, hash, name, TERMS_VERSION]
     );
     const user = rows[0];
@@ -95,7 +100,8 @@ router.post('/register', authLimiter, async (req, res) => {
     const h = await db.query('INSERT INTO households (created_at) VALUES (now()) RETURNING id');
     await db.query('INSERT INTO household_members (household_id, user_id, role) VALUES ($1, $2, $3)', [h.rows[0].id, user.id, 'admin']);
     await issueVerification(req, user.id, user.email);
-    return res.status(201).json({ token: sign(user.id), user: publicUser(user) });
+    const token = await issueSession(user.id, req);
+    return res.status(201).json({ token: token, user: publicUser(user) });
   } catch (err) {
     if (err.code === '23505') return res.status(409).json({ error: 'An account with that email already exists.' });
     console.error('register error', err);
@@ -110,10 +116,31 @@ router.post('/login', authLimiter, async (req, res) => {
   try {
     const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = rows[0];
+
+    // Locked out from earlier failures?
+    if (user && user.lock_until && new Date(user.lock_until) > new Date()) {
+      const mins = Math.max(1, Math.ceil((new Date(user.lock_until) - new Date()) / 60000));
+      return res.status(429).json({ error: 'Too many failed attempts. Please wait ' + mins + ' minute' + (mins === 1 ? '' : 's') + ' and try again, or reset your password.' });
+    }
+
     const ok = user ? await bcrypt.compare(password, user.password_hash) : false;
-    if (!ok) return res.status(401).json({ error: 'Email or password is incorrect.' });
-    db.query('UPDATE users SET last_accessed_at = now() WHERE id = $1', [user.id]).catch(function () {});
-    return res.json({ token: sign(user.id), user: publicUser(user) });
+    if (!ok) {
+      if (user) {
+        const count = (user.failed_login_count || 0) + 1;
+        if (count >= LOGIN_MAX_ATTEMPTS) {
+          const until = new Date(Date.now() + LOGIN_LOCK_MIN * 60000).toISOString();
+          await db.query('UPDATE users SET failed_login_count = 0, lock_until = $1 WHERE id = $2', [until, user.id]);
+          return res.status(429).json({ error: 'Too many failed attempts. This account is locked for ' + LOGIN_LOCK_MIN + ' minutes. Please wait, or reset your password.' });
+        }
+        await db.query('UPDATE users SET failed_login_count = $1 WHERE id = $2', [count, user.id]);
+      }
+      return res.status(401).json({ error: 'Email or password is incorrect.' });
+    }
+
+    // success — clear any failure/lock state
+    db.query('UPDATE users SET last_accessed_at = now(), failed_login_count = 0, lock_until = NULL WHERE id = $1', [user.id]).catch(function () {});
+    const token = await issueSession(user.id, req);
+    return res.json({ token: token, user: publicUser(user) });
   } catch (err) {
     console.error('login error', err);
     return res.status(500).json({ error: 'Something went wrong.' });
@@ -122,7 +149,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
 // GET /api/auth/me  — current user + household role/partner
 router.get('/me', requireAuth, async (req, res) => {
-  const { rows } = await db.query('SELECT id, email, name, email_verified FROM users WHERE id = $1', [req.userId]);
+  const { rows } = await db.query('SELECT id, email, name, email_verified, terms_version FROM users WHERE id = $1', [req.userId]);
   if (!rows[0]) return res.status(404).json({ error: 'Not found.' });
   // refresh last-access at most once an hour to keep writes light
   db.query("UPDATE users SET last_accessed_at = now() WHERE id = $1 AND (last_accessed_at IS NULL OR last_accessed_at < now() - interval '1 hour')", [req.userId]).catch(function () {});
@@ -144,6 +171,24 @@ router.get('/me', requireAuth, async (req, res) => {
     });
   }
   res.json({ user: publicUser(rows[0]), household: household });
+});
+
+// POST /api/auth/accept-terms — record (re-)acceptance of the current policy version
+router.post('/accept-terms', requireAuth, async (req, res) => {
+  const accepted = req.body.acceptedTerms === true || req.body.acceptedTerms === 'true';
+  if (!accepted) return res.status(400).json({ error: 'Please accept the Terms, Privacy Policy and Cookie Policy to continue.' });
+  await db.query('UPDATE users SET terms_version = $1, terms_accepted_at = now() WHERE id = $2', [TERMS_VERSION, req.userId]);
+  const { rows } = await db.query('SELECT id, email, name, email_verified, terms_version FROM users WHERE id = $1', [req.userId]);
+  if (!rows[0]) return res.status(404).json({ error: 'Not found.' });
+  res.json({ user: publicUser(rows[0]) });
+});
+
+// POST /api/auth/logout — end this device's session
+router.post('/logout', requireAuth, async (req, res) => {
+  if (req.jti) {
+    try { await db.query('DELETE FROM sessions WHERE jti = $1 AND user_id = $2', [req.jti, req.userId]); } catch (e) {}
+  }
+  res.json({ ok: true });
 });
 
 // GET /api/auth/verify?token=...  — clicked from the email; redirects back to the app

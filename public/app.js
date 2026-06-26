@@ -148,6 +148,8 @@
     eye: '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff: '<svg aria-hidden="true" focusable="false" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 10.6a3 3 0 0 0 4.2 4.2"/><path d="M9.4 5.2A9.5 9.5 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4M6.2 6.2A17 17 0 0 0 2 12s3.5 7 10 7a9.5 9.5 0 0 0 3.6-.7"/></svg>',
     down: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
+    up: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 15l6-6 6 6"/></svg>',
+    reorder: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-3 3 3 3M5 9h11M16 18l3-3-3-3M19 15H8"/></svg>',
     shuffle: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>',
     cake: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 21h16M5 21v-7h14v7M8 14V8m4 6V7m4 7V8M12 7V3"/></svg>',
     edit: '<svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
@@ -168,7 +170,13 @@
       headers: headers,
       body: opts.body ? JSON.stringify(opts.body) : undefined
     }).then(function (res) {
-      if (res.status === 401) { signOut(); throw new Error('Session expired'); }
+      if (res.status === 401) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          if (data && data.code === 'SESSION_REVOKED') { try { toast('You were signed out because your account was opened on another device.'); } catch (e) {} }
+          signOut();
+          throw new Error('Session expired');
+        });
+      }
       return res.json().then(function (data) {
         if (!res.ok) throw new Error(data.error || 'Something went wrong.');
         return data;
@@ -357,12 +365,37 @@
   }
 
   function signOut() {
+    var t = token;
     token = null; me = null;
     localStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem(TOKEN_KEY);
+    if (t) { try { fetch('/api/auth/logout', { method: 'POST', headers: { 'Authorization': 'Bearer ' + t } }).catch(function () {}); } catch (e) {} }
     children = []; clubs = []; people = [];
     state = { view: 'home', childId: null, clubId: null, personId: null };
     renderLanding();
+  }
+
+  // Shown when the user's accepted policy version is out of date (policies changed).
+  function renderReconsent() {
+    leaveLanding();
+    el('screen').innerHTML =
+      '<div class="auth">' +
+        '<img class="logo" src="/logo.png" alt="Parent Recall — Remember Everything"/>' +
+        '<p class="blurb">We\u2019ve updated our Terms, Privacy Policy and Cookie Policy. Please review and accept them to carry on.</p>' +
+        '<label class="agreebox"><input type="checkbox" id="rc_agree"/><span>I have read and agree to the <a href="/terms" target="_blank" rel="noopener">Terms &amp; Conditions</a>, <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a> and <a href="/cookies" target="_blank" rel="noopener">Cookie Policy</a>.</span></label>' +
+        '<button class="save" id="rcBtn" disabled>Continue</button>' +
+        '<div class="toggle"><button id="rcSignout" type="button">Sign out</button></div>' +
+      '</div>';
+    var box = el('rc_agree');
+    box.onchange = function () { el('rcBtn').disabled = !box.checked; };
+    el('rcBtn').onclick = function () {
+      if (!box.checked) return;
+      var btn = el('rcBtn'); btn.disabled = true; btn.textContent = 'Please wait\u2026';
+      api('/auth/accept-terms', { method: 'POST', body: { acceptedTerms: true } })
+        .then(function (d) { me = d.user; boot(); })
+        .catch(function (err) { btn.disabled = false; btn.textContent = 'Continue'; alert(err.message); });
+    };
+    el('rcSignout').onclick = signOut;
   }
 
   /* ---------------- Forgot / reset password ---------------- */
@@ -533,6 +566,7 @@
       ? '<div class="eyebrow">' + esc(child.name) + '\u2019s clubs &amp; classes</div>' +
         '<div class="list">' + rows +
           '<button class="addtile" id="addClub"><span class="pl">' + ICON.plus + '</span>Add a club or class</button>' +
+          (clubs.length > 1 ? '<button class="ministep center" id="reorderClubs">' + ICON.reorder + 'Reorder clubs &amp; classes</button>' : '') +
         '</div>'
       : '<div class="list" style="margin-top:8px">' + rows +
           (admin ? '<button class="addtile" id="addChildBtn"><span class="pl">' + ICON.plus + '</span>Add a child</button>' : '') +
@@ -554,6 +588,7 @@
           '<select id="childSel" aria-label="Choose which child’s groups to view">' + opts + '</select>' +
           '<span class="av">' + ICON.down + '</span></div>' +
           (admin ? '<button class="ministep" id="editChild">' + ICON.edit + 'Rename or remove ' + esc(child.name) + '</button>' : '') +
+          (admin && children.length > 1 ? '<button class="ministep" id="reorderChildren">' + ICON.reorder + 'Reorder children</button>' : '') +
         '</div>' : '') +
       clubsBlock;
   }
@@ -969,6 +1004,55 @@
     };
   }
 
+  // Reorder children, or a child's clubs, with up/down controls.
+  function sheetReorder(kind) {
+    var items = (kind === 'children' ? children : clubs).slice();
+    if (items.length < 2) return;
+    var title = kind === 'children' ? 'Reorder children' : 'Reorder clubs & classes';
+    var lead = kind === 'children'
+      ? 'Use the arrows to set the order your children appear in.'
+      : 'Use the arrows to set the order these clubs and classes appear in.';
+
+    function rowsHtml() {
+      return items.map(function (it, i) {
+        return '<div class="rerow">' +
+          '<span class="rerank">' + (i + 1) + '</span>' +
+          '<span class="rename">' + esc(it.name) + (kind === 'clubs' && it.sub ? ' <span class="resub">' + esc(it.sub) + '</span>' : '') + '</span>' +
+          '<span class="rebtns">' +
+            '<button type="button" class="rebtn" data-up="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Move up">' + ICON.up + '</button>' +
+            '<button type="button" class="rebtn" data-down="' + i + '"' + (i === items.length - 1 ? ' disabled' : '') + ' aria-label="Move down">' + ICON.down + '</button>' +
+          '</span></div>';
+      }).join('');
+    }
+    function bindRe() {
+      Array.prototype.forEach.call(document.querySelectorAll('#reList .rebtn'), function (b) {
+        b.onclick = function () {
+          var up = b.getAttribute('data-up'), down = b.getAttribute('data-down'), t;
+          if (up !== null) { var i = parseInt(up, 10); if (i > 0) { t = items[i - 1]; items[i - 1] = items[i]; items[i] = t; } }
+          else if (down !== null) { var j = parseInt(down, 10); if (j < items.length - 1) { t = items[j + 1]; items[j + 1] = items[j]; items[j] = t; } }
+          el('reList').innerHTML = rowsHtml(); bindRe();
+        };
+      });
+    }
+    el('sheet').innerHTML =
+      '<div class="grab"></div><h3>' + esc(title) + '</h3>' +
+      '<p class="lead">' + lead + '</p>' +
+      '<div class="relist" id="reList">' + rowsHtml() + '</div>' +
+      '<button class="save" id="reSave">Save order</button>' +
+      '<button class="cancel" id="reCancel">Cancel</button>';
+    show(); bindRe();
+    el('reCancel').onclick = hide;
+    el('reSave').onclick = function () {
+      var btn = el('reSave'); btn.disabled = true; btn.textContent = 'Saving\u2026';
+      var order = items.map(function (it) { return it.id; });
+      var p = kind === 'children'
+        ? api('/children/reorder', { method: 'POST', body: { order: order } }).then(loadChildren)
+        : api('/clubs/reorder', { method: 'POST', body: { childId: state.childId, order: order } }).then(function () { return loadClubs(state.childId); });
+      p.then(function () { hide(); render(); })
+       .catch(function (err) { btn.disabled = false; btn.textContent = 'Save order'; alert(err.message); });
+    };
+  }
+
   function sheetPasteList() {
     var c = clubById(state.clubId);
     if (!c) return;
@@ -1350,6 +1434,8 @@
     var accountBtn = el('accountBtn'); if (accountBtn) accountBtn.onclick = sheetAccount;
     var findBtn = el('findBtn'); if (findBtn) findBtn.onclick = function () { state.view = 'find'; render(); };
     var editChild = el('editChild'); if (editChild) editChild.onclick = sheetEditChild;
+    var reorderChildren = el('reorderChildren'); if (reorderChildren) reorderChildren.onclick = function () { sheetReorder('children'); };
+    var reorderClubs = el('reorderClubs'); if (reorderClubs) reorderClubs.onclick = function () { sheetReorder('clubs'); };
     var editClub = el('editClub'); if (editClub) editClub.onclick = sheetEditClub;
     var clubSwitch = el('clubSwitch'); if (clubSwitch) clubSwitch.onchange = function () { var id = this.value; if (!id || id === state.clubId) return; state.clubId = id; loadPeople(id).then(function () { render(); window.scrollTo(0, 0); }); };
     bindPwEyes();
@@ -1413,7 +1499,10 @@
   /* ---------------- Boot ---------------- */
   function boot(done) {
     loadMe()
-      .then(loadChildren)
+      .then(function () {
+        if (me && me.termsCurrent === false) { renderReconsent(); throw '__reconsent__'; }
+        return loadChildren();
+      })
       .then(function () {
         if (children.length) {
           state.childId = children[0].id;
@@ -1426,6 +1515,7 @@
         if (typeof done === 'function') done();
       })
       .catch(function (err) {
+        if (err === '__reconsent__') { if (typeof done === 'function') done(); return; }
         // If the only blocker is an unverified email (optional hard gate),
         // still show home so the banner + resend are reachable.
         if (me && me.email_verified === false) {

@@ -45,8 +45,10 @@ This is the setup and recovery runbook. It captures the exact configuration that
 |---|---|---|
 | `REQUIRE_VERIFIED_EMAIL` | `false` | `true` blocks app access until email verified. Leave **off** at launch. |
 | `REMINDERS_ENABLED` | `true` | `false` disables birthday reminder emails. |
+| `WEEKLY_DIGEST` | `true` | `false` disables the weekly admin email digest. |
+| `WEEKLY_DIGEST_TO` | `team@parentrecall.com` | Where the weekly digest is sent. |
 | `FEEDBACK_TO` | `team@parentrecall.com` | Destination for in-app feedback. |
-| `ADMIN_KEY` | *(unset)* | Set a secret to enable the account-deletion-log CSV export; unset = disabled. |
+| `ADMIN_KEY` | *(unset)* | Set a long random secret to enable the private admin dashboard at `/admin` (registration stats). Unset = dashboard disabled. |
 | `PGSSL` | *(unset)* | Force Postgres SSL on/off. Not needed — SSL is auto-detected (see §4). |
 | `PORT` | injected | **Do not set.** Railway provides it. |
 

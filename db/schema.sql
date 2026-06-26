@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   last_accessed_at TIMESTAMPTZ,
   terms_accepted_at TIMESTAMPTZ,
-  terms_version    TEXT
+  terms_version    TEXT,
+  failed_login_count INTEGER NOT NULL DEFAULT 0,
+  lock_until         TIMESTAMPTZ
 );
 
 -- Minimal record kept AFTER an account is hard-deleted, for security/abuse-prevention
@@ -72,6 +74,7 @@ CREATE TABLE IF NOT EXISTS children (
   user_id      INTEGER REFERENCES users(id) ON DELETE SET NULL,
   name       TEXT NOT NULL,
   is_demo    BOOLEAN NOT NULL DEFAULT false,
+  sort_order INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -83,6 +86,7 @@ CREATE TABLE IF NOT EXISTS clubs (
   name       TEXT NOT NULL,
   sub        TEXT NOT NULL DEFAULT '',
   color      TEXT NOT NULL DEFAULT 'blue',
+  sort_order INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -127,3 +131,13 @@ CREATE TABLE IF NOT EXISTS app_meta (
   value      TEXT,
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Active sessions, one row per signed-in device. Enforces a per-user device cap.
+CREATE TABLE IF NOT EXISTS sessions (
+  id          SERIAL PRIMARY KEY,
+  user_id     INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  jti         TEXT UNIQUE NOT NULL,
+  user_agent  TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
