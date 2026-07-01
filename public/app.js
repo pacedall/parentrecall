@@ -508,15 +508,33 @@
   }
 
   /* ---------------- Render ---------------- */
+  function legalFooter() {
+    return '<footer class="applegal">' +
+      '<div class="lfootlinks">' +
+        '<a href="/support" target="_blank" rel="noopener">Support</a>' +
+        '<a href="/privacy" target="_blank" rel="noopener">Privacy</a>' +
+        '<a href="/terms" target="_blank" rel="noopener">Terms</a>' +
+        '<a href="/cookies" target="_blank" rel="noopener">Cookies</a>' +
+        '<a href="/child-safety" target="_blank" rel="noopener">Child safety</a>' +
+        '<a href="mailto:team@parentrecall.com">Contact</a>' +
+        '<a href="#" id="footCookiePrefs">Cookie settings</a>' +
+      '</div>' +
+      '<p class="applegal-copy">\u00a9 ' + (new Date().getFullYear()) + ' Pacedall Labs Ltd \u00b7 ParentRecall</p>' +
+    '</footer>';
+  }
+
   function render() {
     leaveLanding();
     var screen = el('screen');
-    if (state.view === 'find') screen.innerHTML = renderFind();
-    else if (state.view === 'practice') screen.innerHTML = renderPractice();
-    else if (state.view === 'quiz') screen.innerHTML = renderQuiz();
-    else if (state.view === 'profile') screen.innerHTML = renderProfile();
-    else if (state.view === 'club') screen.innerHTML = renderClub();
-    else screen.innerHTML = renderHome();
+    var html;
+    if (state.view === 'find') html = renderFind();
+    else if (state.view === 'practice') html = renderPractice();
+    else if (state.view === 'quiz') html = renderQuiz();
+    else if (state.view === 'profile') html = renderProfile();
+    else if (state.view === 'club') html = renderClub();
+    else html = renderHome();
+    if (state.view !== 'practice' && state.view !== 'quiz') html += legalFooter();
+    screen.innerHTML = html;
     bind();
   }
 
@@ -1364,7 +1382,7 @@
       '<input class="f" id="f_qp0" maxlength="15" placeholder="e.g. Priya" autocomplete="off"/>' +
       '<input class="f" id="f_qp1" maxlength="15" placeholder="Another parent / carer" autocomplete="off" style="margin-top:8px"/>' +
       '<button class="save" id="qSave" disabled>Save</button>' +
-      '<button class="rowbtn" id="qSaveMore" disabled>Save &amp; add another</button>' +
+      '<button class="rowbtn" id="qSaveMore" disabled style="margin-top:10px">Save &amp; add another</button>' +
       '<button class="cancel" id="cancelBtn">Done</button>';
     show();
     var nm = el('f_qname');
@@ -1858,6 +1876,7 @@
     var practiceStart = el('practiceStart'); if (practiceStart) practiceStart.onclick = startPractice;
     var quickAdd = el('quickAdd'); if (quickAdd) quickAdd.onclick = sheetQuickAdd;
     var unsortedBtn = el('unsortedBtn'); if (unsortedBtn) unsortedBtn.onclick = sheetUnsorted;
+    var footCookie = el('footCookiePrefs'); if (footCookie) footCookie.onclick = function (e) { e.preventDefault(); if (window.cookieConsent) window.cookieConsent.open(); };
     var practiceStop = el('practiceStop'); if (practiceStop) practiceStop.onclick = function () { practice = null; state.view = 'home'; loadPracticeStatus().then(render); };
     var practiceNext = el('practiceNext'); if (practiceNext) practiceNext.onclick = nextPractice;
     var practiceDone = el('practiceDone'); if (practiceDone) practiceDone.onclick = function () { practice = null; state.view = 'home'; render(); };

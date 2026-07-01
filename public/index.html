@@ -12,12 +12,175 @@
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div id="app"><div id="screen"></div></div>
+  <div id="app"><div id="screen"></div><footer class="applegal" id="appLegal"><a href="/support" target="_blank" rel="noopener">Support</a><a href="/privacy" target="_blank" rel="noopener">Privacy</a><a href="/terms" target="_blank" rel="noopener">Terms</a><a href="/cookies" target="_blank" rel="noopener">Cookies</a><a href="/child-safety" target="_blank" rel="noopener">Child safety</a><a href="/delete-account" target="_blank" rel="noopener">Delete account</a><a href="mailto:team@parentrecall.com">Contact</a><button type="button" class="cclinkbtn" data-cc="customise">Cookie settings</button></footer></div>
   <div id="printArea"></div>
   <div class="scrim" id="scrim"><div class="sheet" id="sheet"></div></div>
+
+  <!-- ===================== COOKIE CONSENT ===================== -->
+  <div class="cc-scope">
+    <div class="cc-banner" role="region" aria-label="Cookie consent" aria-live="polite" data-open="false" id="ccBanner">
+      <h2 class="cc-title">We value your privacy</h2>
+      <p class="cc-text">
+        We use cookies to run ParentRecall and, with your consent, to understand how it's used and
+        improve it. You can accept all, reject non-essential, or choose what to allow.
+        See our <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.
+      </p>
+      <div class="cc-actions">
+        <button class="cc-btn cc-btn--primary" data-cc="accept">Accept all</button>
+        <button class="cc-btn" data-cc="reject">Reject non-essential</button>
+        <button class="cc-btn cc-btn--link" data-cc="customise">Manage preferences</button>
+      </div>
+    </div>
+
+    <div class="cc-overlay" data-open="false" id="ccOverlay" role="dialog" aria-modal="true" aria-labelledby="ccModalTitle">
+      <div class="cc-modal" id="ccModal">
+        <h2 class="cc-modal-title" id="ccModalTitle">Cookie preferences</h2>
+        <p class="cc-modal-intro">Choose which categories you allow. Essential cookies are always on
+          because the site can't work without them.</p>
+
+        <div class="cc-cat">
+          <div class="cc-cat-head">
+            <span class="cc-cat-name">Strictly necessary</span>
+            <label class="cc-switch">
+              <input type="checkbox" checked disabled aria-label="Strictly necessary cookies (always on)">
+              <span class="cc-slider"></span>
+            </label>
+          </div>
+          <p class="cc-cat-desc">Needed for core features like security, keeping you signed in, and remembering your choices. Always active.</p>
+        </div>
+
+        <div class="cc-cat">
+          <div class="cc-cat-head">
+            <span class="cc-cat-name">Analytics</span>
+            <label class="cc-switch">
+              <input type="checkbox" data-cat="analytics" aria-label="Analytics cookies">
+              <span class="cc-slider"></span>
+            </label>
+          </div>
+          <p class="cc-cat-desc">Help us understand how visitors use ParentRecall so we can improve it. All data is aggregated.</p>
+        </div>
+
+        <div class="cc-cat">
+          <div class="cc-cat-head">
+            <span class="cc-cat-name">Marketing</span>
+            <label class="cc-switch">
+              <input type="checkbox" data-cat="marketing" aria-label="Marketing cookies">
+              <span class="cc-slider"></span>
+            </label>
+          </div>
+          <p class="cc-cat-desc">Used to deliver relevant content and measure the effectiveness of campaigns.</p>
+        </div>
+
+        <div class="cc-modal-actions">
+          <button class="cc-btn cc-btn--primary" data-cc="save">Save preferences</button>
+          <button class="cc-btn" data-cc="accept">Accept all</button>
+          <button class="cc-btn" data-cc="reject">Reject non-essential</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="cc-reopen" id="ccReopen" data-show="false" aria-label="Cookie settings" title="Cookie settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"></circle><circle cx="9" cy="9" r="0.8" fill="currentColor"></circle>
+        <circle cx="15" cy="10" r="0.8" fill="currentColor"></circle><circle cx="10" cy="14" r="0.8" fill="currentColor"></circle>
+        <circle cx="14.5" cy="14.5" r="0.8" fill="currentColor"></circle>
+      </svg>
+    </button>
+  </div>
+
   <script src="/vendor/xlsx.full.min.js"></script>
   <script src="/vendor/dicebear.js"></script>
   <script src="/app.js"></script>
+  <!-- ===================== COOKIE CONSENT LOGIC ===================== -->
+  <script>
+  (function () {
+    "use strict";
+    var STORAGE_KEY = "cookie_consent";
+    var VERSION = 1; // bump when the cookie policy changes to re-prompt everyone
+
+    var banner  = document.getElementById("ccBanner");
+    var overlay = document.getElementById("ccOverlay");
+    var modal   = document.getElementById("ccModal");
+    var reopen  = document.getElementById("ccReopen");
+    var lastFocused = null;
+    if (!banner) return;
+
+    function read() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        var data = JSON.parse(raw);
+        if (data.version !== VERSION) return null;
+        return data;
+      } catch (e) { return null; }
+    }
+    function write(prefs) {
+      var data = { version: VERSION, timestamp: new Date().toISOString(), necessary: true,
+        analytics: !!prefs.analytics, marketing: !!prefs.marketing };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {}
+      apply(data); return data;
+    }
+    function apply(data) {
+      window.dispatchEvent(new CustomEvent("cookieconsent", { detail: data }));
+      if (typeof window.onCookieConsent === "function") window.onCookieConsent(data);
+    }
+    function showBanner() { banner.dataset.open = "true"; reopen.dataset.show = "false"; }
+    function hideBanner() { banner.dataset.open = "false"; reopen.dataset.show = "true"; }
+    function openModal() {
+      lastFocused = document.activeElement;
+      var saved = read();
+      modal.querySelector('[data-cat="analytics"]').checked = saved ? saved.analytics : false;
+      modal.querySelector('[data-cat="marketing"]').checked = saved ? saved.marketing : false;
+      overlay.dataset.open = "true";
+      modal.querySelector('[data-cc="save"]').focus();
+      document.addEventListener("keydown", onKeydown);
+    }
+    function closeModal() {
+      overlay.dataset.open = "false";
+      document.removeEventListener("keydown", onKeydown);
+      if (lastFocused) lastFocused.focus();
+    }
+    function onKeydown(e) {
+      if (e.key === "Escape") { closeModal(); return; }
+      if (e.key !== "Tab") return;
+      var f = modal.querySelectorAll('button, input:not([disabled]), a[href]');
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+    function acceptAll() { write({ analytics: true, marketing: true }); hideBanner(); closeModal(); }
+    function rejectAll() { write({ analytics: false, marketing: false }); hideBanner(); closeModal(); }
+    function savePrefs() {
+      write({ analytics: modal.querySelector('[data-cat="analytics"]').checked,
+        marketing: modal.querySelector('[data-cat="marketing"]').checked });
+      hideBanner(); closeModal();
+    }
+    document.addEventListener("click", function (e) {
+      var action = e.target.closest("[data-cc]");
+      if (action) {
+        var a = action.dataset.cc;
+        if (a === "accept") acceptAll();
+        if (a === "reject") rejectAll();
+        if (a === "customise") openModal();
+        if (a === "save") savePrefs();
+      }
+      if (e.target === overlay) closeModal();
+    });
+    reopen.addEventListener("click", openModal);
+
+    window.cookieConsent = {
+      get: read,
+      has: function (cat) { var d = read(); return d ? !!d[cat] : false; },
+      open: openModal,
+      reset: function () { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} showBanner(); }
+    };
+
+    var existing = read();
+    if (existing) { apply(existing); hideBanner(); }
+    else { showBanner(); }
+  })();
+  </script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function () {
