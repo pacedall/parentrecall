@@ -365,8 +365,8 @@ input.f:focus-visible,textarea.f:focus-visible,.selectpill select:focus-visible{
 .rebtn:disabled{opacity:.35;cursor:not-allowed}
 
 /* ---- Memory Practice card (home) ---- */
-.practicecard{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;cursor:pointer;
-  background:linear-gradient(135deg,#18306C,#244a9e);color:#fff;border-radius:18px;padding:16px;margin:4px 0 16px;
+.practicecard{display:flex;align-items:center;gap:14px;text-align:left;border:0;cursor:pointer;
+  background:linear-gradient(135deg,#18306C,#244a9e);color:#fff;border-radius:18px;padding:16px;margin:4px 16px 16px;
   box-shadow:0 10px 24px rgba(24,48,108,.22)}
 .practicecard.done{background:linear-gradient(135deg,#274a86,#3a6ab0)}
 .pcicon{flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:#fff}
@@ -440,7 +440,7 @@ input.f:focus-visible,textarea.f:focus-visible,.selectpill select:focus-visible{
 .parstar.on{border-color:#f0b431;background:#fff8e8;color:#f5b301}
 
 /* ---- Quick-entry inbox ---- */
-.quickrow{display:flex;gap:10px;margin:0 0 16px}
+.quickrow{display:flex;gap:10px;margin:0 16px 16px}
 .quickadd{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:8px;background:#0E7C5A;border:0;color:#fff;font-weight:700;font-size:15px;font-family:Poppins,sans-serif;padding:14px;border-radius:14px;cursor:pointer;box-shadow:0 6px 16px rgba(14,124,90,.22)}
 .quickadd svg{color:#fff}
 .unsortedbtn{flex:0 0 auto;display:flex;align-items:center;gap:8px;background:#fff6e9;border:1.5px solid #f0d8a8;color:#9a6a12;font-weight:700;font-size:14px;padding:14px 16px;border-radius:14px;cursor:pointer}
