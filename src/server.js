@@ -9,6 +9,17 @@ const { migrate } = require('./migrate');
 const app = express();
 app.set('trust proxy', 1); // Railway sits behind a proxy; needed for rate-limit + secure cookies later.
 
+// Canonical host: send www.* -> apex so there is ONE origin (and therefore one
+// login/session state). Without this, a token stored on parentrecall.com is not
+// visible on www.parentrecall.com, so www shows the logged-out homepage.
+app.use((req, res, next) => {
+  const host = (req.headers.host || '').toLowerCase();
+  if (host.slice(0, 4) === 'www.') {
+    return res.redirect(301, 'https://' + host.slice(4) + req.originalUrl);
+  }
+  next();
+});
+
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
