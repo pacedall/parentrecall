@@ -32,7 +32,7 @@ function cleanParents(raw) {
     const name = String(e.name || '').trim().replace(/\s+/g, ' ').slice(0, 15);
     if (!name) continue;
     const label = PLABEL_OK.indexOf(e.label) >= 0 ? e.label : 'other';
-    out.push({ name: name, label: label });
+    out.push({ name: name, label: label, star: !!e.star });
     if (out.length >= 2) break;
   }
   if (!out.length) return { list: '', text: '' };
@@ -112,9 +112,9 @@ router.get('/', async (req, res) => {
   if (!clubId) return res.status(400).json({ error: 'clubId is required.' });
   if (!(await ownClub(req, clubId))) return res.status(404).json({ error: 'Club not found.' });
   const { rows } = await db.query(
-    `SELECT id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype
+    `SELECT id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred
      FROM people WHERE household_id = $1 AND club_id = $2
-     ORDER BY created_at ASC, id ASC`,
+     ORDER BY starred DESC, created_at ASC, id ASC`,
     [req.householdId, clubId]
   );
   res.json(rows);
@@ -141,7 +141,7 @@ router.post('/bulk', async (req, res) => {
   });
   const { rows } = await db.query(
     'INSERT INTO people (household_id, user_id, club_id, name) VALUES ' + values.join(', ') +
-    ' RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype',
+    ' RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred',
     params
   );
   res.status(201).json({ added: rows.length, people: rows });
@@ -168,10 +168,13 @@ router.post('/import', async (req, res) => {
     seen[k] = true;
     const birthday = String(p.birthday || '').trim().slice(0, 60);
     const bd = parseBirthday(birthday);
+    const pc = cleanParents(p.parents_list !== undefined ? p.parents_list : null);
     clean.push({
       name: name,
       role: String(p.role || '').trim().slice(0, 300),
-      parents: String(p.parents || '').trim().slice(0, 300),
+      parents: pc.list ? pc.text : String(p.parents || '').trim().slice(0, 300),
+      parents_list: pc.list,
+      ptype: cleanPtype(p.ptype),
       hooks: String(p.hooks || '').trim().slice(0, 2000),
       birthday: birthday, bmonth: bd.month, bday: bd.day,
     });
@@ -184,13 +187,13 @@ router.post('/import', async (req, res) => {
   let i = 1;
   clean.forEach(function (p) {
     const ph = [];
-    for (let n = 0; n < 10; n++) ph.push('$' + (i++));
+    for (let n = 0; n < 12; n++) ph.push('$' + (i++));
     values.push('(' + ph.join(',') + ')');
-    params.push(req.householdId, req.userId, clubId, p.name, p.role, p.parents, p.hooks, p.birthday, p.bmonth, p.bday);
+    params.push(req.householdId, req.userId, clubId, p.name, p.role, p.parents, p.parents_list, p.hooks, p.birthday, p.bmonth, p.bday, p.ptype);
   });
   const { rows } = await db.query(
-    'INSERT INTO people (household_id, user_id, club_id, name, role, parents, hooks, birthday, birthday_month, birthday_day) VALUES ' +
-    values.join(', ') + ' RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype',
+    'INSERT INTO people (household_id, user_id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, ptype) VALUES ' +
+    values.join(', ') + ' RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred',
     params
   );
   res.status(201).json({ added: rows.length, people: rows });
@@ -217,10 +220,10 @@ router.post('/', async (req, res) => {
     avatar: sanitizeAvatar(req.body.avatar),
   };
   const { rows } = await db.query(
-    `INSERT INTO people (household_id, user_id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, avatar, ptype)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
-     RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype`,
-    [req.householdId, req.userId, clubId, v.name, v.role, v.parents, v.parentsList, v.hooks, v.birthday, bd.month, bd.day, v.avatar, cleanPtype(req.body.ptype)]
+    `INSERT INTO people (household_id, user_id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, avatar, ptype, starred)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+     RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred`,
+    [req.householdId, req.userId, clubId, v.name, v.role, v.parents, v.parentsList, v.hooks, v.birthday, bd.month, bd.day, v.avatar, cleanPtype(req.body.ptype), !!req.body.starred]
   );
   res.status(201).json(rows[0]);
 });
@@ -254,11 +257,12 @@ router.put('/:id', async (req, res) => {
     sets.push(`parents = $${i++}`); vals.push(pc.text);
     sets.push(`parents_list = $${i++}`); vals.push(pc.list);
   }
+  if (req.body.starred !== undefined) { sets.push(`starred = $${i++}`); vals.push(!!req.body.starred); }
   if (!sets.length) return res.status(400).json({ error: 'Nothing to update.' });
   vals.push(req.params.id, req.householdId);
   const { rows } = await db.query(
     `UPDATE people SET ${sets.join(', ')} WHERE id = $${i++} AND household_id = $${i}
-     RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype`,
+     RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred`,
     vals
   );
   if (!rows[0]) return res.status(404).json({ error: 'Not found.' });

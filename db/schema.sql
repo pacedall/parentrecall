@@ -13,7 +13,9 @@ CREATE TABLE IF NOT EXISTS users (
   terms_accepted_at TIMESTAMPTZ,
   terms_version    TEXT,
   failed_login_count INTEGER NOT NULL DEFAULT 0,
-  lock_until         TIMESTAMPTZ
+  lock_until         TIMESTAMPTZ,
+  practice_streak    INTEGER NOT NULL DEFAULT 0,
+  practice_last_day  DATE
 );
 
 -- Minimal record kept AFTER an account is hard-deleted, for security/abuse-prevention
@@ -75,6 +77,7 @@ CREATE TABLE IF NOT EXISTS children (
   name       TEXT NOT NULL,
   is_demo    BOOLEAN NOT NULL DEFAULT false,
   sort_order INTEGER,
+  hidden     BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -87,6 +90,8 @@ CREATE TABLE IF NOT EXISTS clubs (
   sub        TEXT NOT NULL DEFAULT '',
   color      TEXT NOT NULL DEFAULT 'blue',
   sort_order INTEGER,
+  hidden     BOOLEAN NOT NULL DEFAULT false,
+  expected_size INTEGER,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -105,6 +110,7 @@ CREATE TABLE IF NOT EXISTS people (
   birthday_day   INTEGER,
   avatar         TEXT NOT NULL DEFAULT '',
   ptype          TEXT NOT NULL DEFAULT '',
+  starred        BOOLEAN NOT NULL DEFAULT false,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -141,3 +147,28 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+
+-- Per-user spaced-repetition stats for the Memory Practice trainer.
+CREATE TABLE IF NOT EXISTS practice_stats (
+  id                SERIAL PRIMARY KEY,
+  user_id           INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  person_id         INTEGER NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  box               INTEGER NOT NULL DEFAULT 0,
+  seen              INTEGER NOT NULL DEFAULT 0,
+  correct           INTEGER NOT NULL DEFAULT 0,
+  last_practiced_at TIMESTAMPTZ,
+  UNIQUE (user_id, person_id)
+);
+CREATE INDEX IF NOT EXISTS idx_practice_user ON practice_stats(user_id);
+
+-- Quick-capture inbox: jot a name fast at the gate, allocate to a club later.
+CREATE TABLE IF NOT EXISTS inbox (
+  id           SERIAL PRIMARY KEY,
+  household_id INTEGER NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+  user_id      INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  name         TEXT NOT NULL,
+  note         TEXT NOT NULL DEFAULT '',
+  parents      TEXT NOT NULL DEFAULT '',
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_inbox_household ON inbox(household_id);

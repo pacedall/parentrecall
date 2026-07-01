@@ -9,6 +9,13 @@ router.use(loadHousehold);
 
 const COLORS = ['blue', 'teal', 'navy', 'amber', 'red', 'orange'];
 
+function cleanSize(v) {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = parseInt(v, 10);
+  if (isNaN(n) || n <= 0) return null;
+  return Math.min(n, 1000);
+}
+
 // GET /api/clubs?childId=  -> clubs for a child, with people counts (both roles)
 router.get('/', async (req, res) => {
   const childId = parseInt(req.query.childId, 10);
@@ -18,13 +25,28 @@ router.get('/', async (req, res) => {
   if (!owns.rows[0]) return res.status(404).json({ error: 'Child not found.' });
 
   const { rows } = await db.query(
-    `SELECT cl.id, cl.child_id, cl.name, cl.sub, cl.color, COUNT(p.id)::int AS people_count
+    `SELECT cl.id, cl.child_id, cl.name, cl.sub, cl.color, cl.expected_size, COUNT(p.id)::int AS people_count
      FROM clubs cl
      LEFT JOIN people p ON p.club_id = cl.id
-     WHERE cl.household_id = $1 AND cl.child_id = $2
-     GROUP BY cl.id, cl.child_id, cl.name, cl.sub, cl.color, cl.created_at, cl.sort_order
+     WHERE cl.household_id = $1 AND cl.child_id = $2 AND cl.hidden = false
+     GROUP BY cl.id, cl.child_id, cl.name, cl.sub, cl.color, cl.expected_size, cl.created_at, cl.sort_order
      ORDER BY cl.sort_order ASC NULLS LAST, cl.created_at ASC, cl.id ASC`,
     [req.householdId, childId]
+  );
+  res.json(rows);
+});
+
+// GET /api/clubs/hidden  -> all hidden clubs for the household (for the "hidden items" manager)
+router.get('/hidden', async (req, res) => {
+  const { rows } = await db.query(
+    `SELECT cl.id, cl.child_id, cl.name, cl.sub, c.name AS child_name, COUNT(p.id)::int AS people_count
+     FROM clubs cl
+     JOIN children c ON c.id = cl.child_id
+     LEFT JOIN people p ON p.club_id = cl.id
+     WHERE cl.household_id = $1 AND cl.hidden = true
+     GROUP BY cl.id, cl.child_id, cl.name, cl.sub, c.name, cl.created_at
+     ORDER BY c.name ASC, cl.created_at ASC`,
+    [req.householdId]
   );
   res.json(rows);
 });
@@ -47,10 +69,10 @@ router.post('/', async (req, res) => {
   }
 
   const { rows } = await db.query(
-    `INSERT INTO clubs (household_id, user_id, child_id, name, sub, color, sort_order)
-     VALUES ($1, $2, $3, $4, $5, $6, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM clubs WHERE child_id = $3))
-     RETURNING id, child_id, name, sub, color`,
-    [req.householdId, req.userId, childId, name, sub, color]
+    `INSERT INTO clubs (household_id, user_id, child_id, name, sub, color, expected_size, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT COALESCE(MAX(sort_order), 0) + 1 FROM clubs WHERE child_id = $3))
+     RETURNING id, child_id, name, sub, color, expected_size`,
+    [req.householdId, req.userId, childId, name, sub, color, cleanSize(req.body.expected_size)]
   );
   res.status(201).json({ ...rows[0], people_count: 0 });
 });
@@ -86,10 +108,12 @@ router.put('/:id', async (req, res) => {
       vals.push(String(req.body[key]).trim());
     }
   }
+  if (req.body.expected_size !== undefined) { fields.push(`expected_size = $${i++}`); vals.push(cleanSize(req.body.expected_size)); }
+  if (req.body.hidden !== undefined) { fields.push(`hidden = $${i++}`); vals.push(!!req.body.hidden); }
   if (!fields.length) return res.status(400).json({ error: 'Nothing to update.' });
   vals.push(req.params.id, req.householdId);
   const { rows } = await db.query(
-    `UPDATE clubs SET ${fields.join(', ')} WHERE id = $${i++} AND household_id = $${i} RETURNING id, child_id, name, sub, color`,
+    `UPDATE clubs SET ${fields.join(', ')} WHERE id = $${i++} AND household_id = $${i} RETURNING id, child_id, name, sub, color, expected_size, hidden`,
     vals
   );
   if (!rows[0]) return res.status(404).json({ error: 'Not found.' });

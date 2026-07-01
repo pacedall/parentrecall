@@ -21,6 +21,9 @@
   var children = [];
   var clubs = [];   // clubs of the current child
   var people = [];  // people of the current club
+  var practiceStatus = null;   // { ready, total, need, streak, doneToday }
+  var practice = null;         // active session: { questions, idx, results, chosen, finished, score, streak }
+  var inbox = [];              // quick-capture items awaiting allocation
 
   var el = function (id) { return document.getElementById(id); };
   function esc(s) { return (s == null ? '' : String(s)).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -53,7 +56,7 @@
         var arr = JSON.parse(p.parents_list);
         if (arr && arr.length) {
           var L = { mother: 'Mother', father: 'Father', other: 'Other' };
-          return arr.map(function (e) { return '<div class="prow2"><span class="plabel">' + (L[e.label] || 'Carer') + '</span>' + esc(e.name) + '</div>'; }).join('');
+          return arr.map(function (e) { return '<div class="prow2"><span class="plabel">' + (L[e.label] || 'Carer') + '</span>' + esc(e.name) + (e.star ? ' <span class="pstar">' + ICON.star + '</span>' : '') + '</div>'; }).join('');
         }
       } catch (e) {}
     }
@@ -150,6 +153,11 @@
     down: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
     up: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 15l6-6 6 6"/></svg>',
     reorder: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l-3 3 3 3M5 9h11M16 18l3-3-3-3M19 15H8"/></svg>',
+    brain: '<svg aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 1 5 3 3 0 0 0 6 1V4a1 1 0 0 0-2-1Z"/><path d="M15 3a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-1 5 3 3 0 0 1-6 1V4a1 1 0 0 1 2-1Z"/></svg>',
+    flame: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 3-1 4-2 6-1 1.6-.5 3.5 1 4 .8.3 1.2-.4 1-1.2 1.6 1 2.4 2.8 2 4.7-.5 2.3-2.7 3.8-5 3.8a5.5 5.5 0 0 1-5.5-5.5c0-2.3 1.4-3.8 2.4-5.3C7.3 6.7 9.5 5 9 2c1.2.6 2.2 1.4 3 2 0-.7 0-1.4 0-2Z"/></svg>',
+    star: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.6l2.95 5.98 6.6.96-4.77 4.65 1.13 6.57L12 18.6l-5.9 3.1 1.12-6.57L2.45 10.5l6.6-.96L12 2.6Z"/></svg>',
+    bolt: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/></svg>',
+    trash: '<svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
     shuffle: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>',
     cake: '<svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M4 21h16M5 21v-7h14v7M8 14V8m4 6V7m4 7V8M12 7V3"/></svg>',
     edit: '<svg aria-hidden="true" focusable="false" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
@@ -268,7 +276,7 @@
 
         '<footer class="lfoot">' +
           '<span class="wordmark">Parent<span>Recall</span></span>' +
-          '<div class="lfootlinks"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a><a href="/delete-account">Delete account</a><a href="#" id="lFeedback">Feedback</a><a href="mailto:team@parentrecall.com">Contact</a></div>' +
+          '<div class="lfootlinks"><a href="/support">Support</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cookies">Cookies</a><a href="/child-safety">Child safety</a><a href="/delete-account">Delete account</a><a href="#" id="lFeedback">Feedback</a><a href="mailto:team@parentrecall.com">Contact</a></div>' +
           '<p>A Pacedall Labs product. \u00a9 2026.</p>' +
         '</footer>' +
       '</div>';
@@ -492,12 +500,19 @@
   function loadPeople(clubId) {
     return api('/people?clubId=' + clubId).then(function (rows) { people = rows; return rows; });
   }
+  function loadPracticeStatus() {
+    return api('/practice/status').then(function (s) { practiceStatus = s; }).catch(function () { practiceStatus = null; });
+  }
+  function loadInbox() {
+    return api('/inbox').then(function (r) { inbox = r || []; }).catch(function () { inbox = []; });
+  }
 
   /* ---------------- Render ---------------- */
   function render() {
     leaveLanding();
     var screen = el('screen');
     if (state.view === 'find') screen.innerHTML = renderFind();
+    else if (state.view === 'practice') screen.innerHTML = renderPractice();
     else if (state.view === 'quiz') screen.innerHTML = renderQuiz();
     else if (state.view === 'profile') screen.innerHTML = renderProfile();
     else if (state.view === 'club') screen.innerHTML = renderClub();
@@ -557,7 +572,7 @@
         return '<button class="row" data-club="' + c.id + '">' +
           '<span class="dot" style="background:' + raw(c.color) + '">' + esc((c.name || '?').charAt(0)) + '</span>' +
           '<span class="meta"><span class="rname">' + esc(c.name) + '</span><span class="rsub">' + esc(c.sub || '') + '</span></span>' +
-          '<span class="count">' + (c.people_count || 0) + '</span>' + ICON.chev +
+          '<span class="count' + (c.expected_size && (c.people_count || 0) < c.expected_size ? ' short' : '') + '">' + (c.people_count || 0) + (c.expected_size ? '<span class="of">/' + c.expected_size + '</span>' : '') + '</span>' + ICON.chev +
         '</button>';
       }).join('');
     }
@@ -583,6 +598,11 @@
         '</span></div>' +
       '<header><img class="logo" src="/logo.png" alt="Parent Recall — Remember Everything"/></header>' +
       banner +
+      practiceCard() +
+      '<div class="quickrow">' +
+        '<button class="quickadd" id="quickAdd">' + ICON.bolt + 'Quick add</button>' +
+        (inbox.length ? '<button class="unsortedbtn" id="unsortedBtn">Unsorted<span class="ub">' + inbox.length + '</span></button>' : '') +
+      '</div>' +
       (children.length ?
         '<div class="pick"><div class="lbl">Whose groups?</div><div class="selectpill">' +
           '<select id="childSel" aria-label="Choose which child’s groups to view">' + opts + '</select>' +
@@ -593,6 +613,122 @@
       clubsBlock;
   }
 
+  /* ---------------- Memory Practice ---------------- */
+  function practiceCard() {
+    if (!practiceStatus || !practiceStatus.ready) return '';
+    var st = practiceStatus;
+    var flame = st.streak > 0 ? '<span class="pcstreak">' + ICON.flame + st.streak + '</span>' : '';
+    var sub = st.doneToday
+      ? 'Done today \u2014 nice one. Come back tomorrow, or go again.'
+      : 'A 30-second warm-up. Keep the names fresh.';
+    return '<button class="practicecard' + (st.doneToday ? ' done' : '') + '" id="practiceStart">' +
+        '<span class="pcicon">' + ICON.brain + '</span>' +
+        '<span class="pcmeta"><span class="pctitle">Today\u2019s Memory Practice' + flame + '</span>' +
+          '<span class="pcsub">' + sub + '</span></span>' +
+        '<span class="pcgo">' + (st.doneToday ? 'Again' : 'Start') + ICON.chev + '</span>' +
+      '</button>';
+  }
+
+  function startPractice() {
+    var btn = el('practiceStart'); if (btn) { btn.disabled = true; }
+    api('/practice').then(function (d) {
+      if (!d.questions || !d.questions.length) {
+        if (btn) btn.disabled = false;
+        toast('Add a hint or a face to a few people first, so there\u2019s something to practise.');
+        return;
+      }
+      practice = { questions: d.questions, idx: 0, results: [], chosen: null, finished: false, score: 0, streak: (practiceStatus && practiceStatus.streak) || 0 };
+      state.view = 'practice'; render(); window.scrollTo(0, 0);
+    }).catch(function (err) { if (btn) btn.disabled = false; alert(err.message); });
+  }
+
+  function answerPractice(opt) {
+    if (!practice || practice.chosen !== null) return;
+    var q = practice.questions[practice.idx];
+    practice.chosen = opt;
+    var correct = opt === q.answer;
+    if (correct) practice.score++;
+    practice.results.push({ personId: q.personId, correct: correct });
+    render();
+  }
+
+  function nextPractice() {
+    if (!practice) return;
+    practice.idx++; practice.chosen = null;
+    if (practice.idx >= practice.questions.length) finishPractice();
+    else { render(); window.scrollTo(0, 0); }
+  }
+
+  function finishPractice() {
+    api('/practice/complete', { method: 'POST', body: { results: practice.results } })
+      .then(function (d) {
+        practice.finished = true; practice.streak = d.streak;
+        if (practiceStatus) { practiceStatus.doneToday = true; practiceStatus.streak = d.streak; }
+        render(); window.scrollTo(0, 0);
+      })
+      .catch(function () { practice.finished = true; render(); });
+  }
+
+  function renderPractice() {
+    if (!practice) { state.view = 'home'; return renderHome(); }
+
+    // Results screen
+    if (practice.finished) {
+      var total = practice.questions.length;
+      var got = practice.score;
+      var msg = got === total ? 'Perfect \u2014 you know everyone!'
+        : got >= Math.ceil(total * 0.6) ? 'Nice work. The ones you missed will come back first next time.'
+        : 'Good start \u2014 a little every day and the names will stick.';
+      return '<div class="topbar"><span class="wordmark-sm">Parent<span>Recall</span></span></div>' +
+        '<div class="presult">' +
+          '<div class="prbig">' + got + ' / ' + total + '</div>' +
+          (practice.streak > 0 ? '<div class="prstreak">' + ICON.flame + ' ' + practice.streak + '-day streak</div>' : '') +
+          '<p class="prmsg">' + msg + '</p>' +
+          '<button class="save" id="practiceDone">Done</button>' +
+        '</div>';
+    }
+
+    var q = practice.questions[practice.idx];
+    var n = practice.questions.length;
+    var answered = practice.chosen !== null;
+    var dots = '';
+    for (var i = 0; i < n; i++) dots += '<span class="pdot' + (i < practice.idx ? ' on' : (i === practice.idx ? ' cur' : '')) + '"></span>';
+
+    var cue = '';
+    if (q.type === 'name') {
+      // The clue is whatever jogs memory: the customised face, the hooks, the role.
+      cue = (q.role ? '<div class="pqrole">' + esc(q.role) + '</div>' : '') +
+            (q.hooks ? '<div class="pqhooks">' + esc(q.hooks) + '</div>' : '');
+    }
+
+    var opts = q.options.map(function (o) {
+      var cls = 'popt';
+      if (answered) {
+        if (o === q.answer) cls += ' right';
+        else if (o === practice.chosen) cls += ' wrong';
+        else cls += ' dim';
+      }
+      return '<button class="' + cls + '" data-opt="' + attr(o) + '"' + (answered ? ' disabled' : '') + '>' + esc(o) + '</button>';
+    }).join('');
+
+    var reveal = answered && q.type === 'name'
+      ? '<div class="pqreveal">' + (practice.chosen === q.answer ? 'Yes \u2014 ' : 'This is ') + '<b>' + esc(q.name) + '</b></div>' : '';
+
+    return '<div class="topbar"><button class="back" id="practiceStop">' + ICON.back + 'Stop</button>' +
+        '<span class="pprog">' + dots + '</span></div>' +
+      '<div class="practice">' +
+        '<div class="pqcard">' +
+          '<span class="pqavatar">' + avatarFor({ avatar: q.avatar }, '#18306C', 132) + '</span>' +
+          (q.showName ? '<div class="pqname">' + esc(q.name) + '</div>' : '') +
+          cue +
+          '<div class="pqprompt">' + esc(q.prompt) + '</div>' +
+        '</div>' +
+        '<div class="popts">' + opts + '</div>' +
+        reveal +
+        (answered ? '<button class="save" id="practiceNext">' + (practice.idx + 1 >= n ? 'See results' : 'Next') + '</button>' : '') +
+      '</div>';
+  }
+
   function renderClub() {
     var c = clubById(state.clubId);
     if (!c) { state.view = 'home'; return renderHome(); }
@@ -601,7 +737,7 @@
       ? people.map(function (p) {
           var sub = p.parents ? esc(p.parents) + (p.role ? ' \u00b7 ' + esc(p.role) : '') : esc(p.role || 'Tap to add details');
           return '<button class="prow" data-person="' + p.id + '">' + avatarFor(p, raw(c.color), 46) +
-            '<span class="meta"><span class="nm">' + esc(p.name) + ptypeTag(p) + (p.birthday ? '<span class="bdaydot"></span>' : '') + '</span>' +
+            '<span class="meta"><span class="nm">' + (p.starred ? '<span class="starbadge">' + ICON.star + '</span>' : '') + esc(p.name) + ptypeTag(p) + (p.birthday ? '<span class="bdaydot"></span>' : '') + '</span>' +
             '<span class="who">' + sub + '</span></span>' + ICON.chev + '</button>';
         }).join('')
       : gettingStarted(3);
@@ -610,6 +746,9 @@
         '<button class="iconbtn" id="editClub" aria-label="Edit club">' + ICON.edit + '</button></div>' +
       '<div class="title"><h2>' + esc(c.name) + '</h2><p>' + (c.sub ? esc(c.sub) + ' · ' : '') +
         people.length + ' ' + (people.length === 1 ? 'person' : 'people') + '</p></div>' +
+      (c.expected_size && people.length < c.expected_size
+        ? '<div class="sizenote">' + people.length + ' of ' + c.expected_size + ' added \u2014 <b>' + (c.expected_size - people.length) + ' still to add</b></div>'
+        : (c.expected_size && people.length >= c.expected_size ? '<div class="sizenote done">All ' + c.expected_size + ' added \u2713</div>' : '')) +
       (clubs.length > 1 ? '<div class="pick clubswitch"><div class="selectpill"><select id="clubSwitch" aria-label="Switch to another club or class">' +
         clubs.map(function (k) { return '<option value="' + k.id + '"' + (k.id === c.id ? ' selected' : '') + '>' + esc(k.name) + (k.sub ? ' \u2014 ' + esc(k.sub) : '') + '</option>'; }).join('') +
         '</select><span class="av">' + ICON.down + '</span></div></div>' : '') +
@@ -632,6 +771,12 @@
         (p.ptype ? '<div>' + ptypeTag(p) + '</div>' : '') +
         (p.role ? '<div class="role">' + esc(p.role) + '</div>' : '') +
         '<span class="pin" style="background:' + raw(c.color) + '">' + esc(c.name) + '</span></div>' +
+      (function () {
+        var isParent = p.ptype === 'parent';
+        var on = p.starred;
+        var label = on ? (isParent ? 'Friendly parent' : 'Best friend') : (isParent ? 'Mark as a friendly parent' : 'Mark as a best friend');
+        return '<button class="starbtn' + (on ? ' on' : '') + '" id="starToggle">' + ICON.star + label + '</button>';
+      })() +
       '<div class="pcardx"><div class="h">What jogs your memory</div><div class="b">' +
         (p.hooks ? esc(p.hooks) : 'Nothing yet \u2014 tap Edit to add the little details (the car, the job, where they sit) that bring the name back.') + '</div></div>' +
       ((p.parents_list || p.parents) ? '<div class="pcardx muted"><div class="h">Parents / carers</div><div class="b">' + parentsHtml(p) + '</div></div>' : '') +
@@ -768,10 +913,13 @@
       '<input class="f" id="f_gname" placeholder="e.g. Swimming, Year 2, Beavers" autocomplete="off"/>' +
       '<label>When / where <span class="opt">optional</span></label>' +
       '<input class="f" id="f_gsub" placeholder="e.g. Tadpoles · Tue 5pm" autocomplete="off"/>' +
+      '<label>Class / group size <span class="opt">optional</span></label>' +
+      '<input class="f" id="f_gsize" type="number" min="1" inputmode="numeric" placeholder="e.g. 24"/>' +
+      '<p class="hint">Know the total? We\u2019ll show how many you still have to add.</p>' +
       '<button class="save" id="saveBtn" disabled>Add club</button>' +
       '<button class="cancel" id="cancelBtn">Cancel</button>';
     show(); wireSheet('f_gname', function () {
-      var body = { childId: state.childId, name: el('f_gname').value.trim(), sub: el('f_gsub').value.trim() };
+      var body = { childId: state.childId, name: el('f_gname').value.trim(), sub: el('f_gsub').value.trim(), expected_size: el('f_gsize').value };
       return api('/clubs', { method: 'POST', body: body }).then(function (row) {
         return loadClubs(state.childId).then(function () {
           state.view = 'club'; state.clubId = row.id;
@@ -803,7 +951,8 @@
         .map(function (o) { return '<option value="' + o[0] + '"' + (e.label === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
       return '<div class="parentrow">' +
         '<input class="f" id="f_par' + idx + '" maxlength="15" placeholder="Name" value="' + attr(e.name || '') + '" autocomplete="off"/>' +
-        '<select class="f psel" id="f_parlabel' + idx + '">' + opts + '</select></div>';
+        '<select class="f psel" id="f_parlabel' + idx + '">' + opts + '</select>' +
+        '<button type="button" class="parstar' + (e.star ? ' on' : '') + '" id="f_parstar' + idx + '" aria-label="Mark as a friendly parent" title="Friendly parent">' + ICON.star + '</button></div>';
     }
 
     function swatches(list, key, kind) {
@@ -882,6 +1031,10 @@
       });
     }
     var avShuffle = el('avShuffle');
+    [0, 1].forEach(function (idx) {
+      var ps = el('f_parstar' + idx);
+      if (ps) ps.onclick = function () { ps.classList.toggle('on'); };
+    });
     if (avShuffle) avShuffle.onclick = function () { var n = newAvatar(); cfg.seed = n.seed; cfg.skin = n.skin; cfg.hairColor = n.hairColor; cfg.hair = n.hair; cfg.glasses = n.glasses; cfg.bg = n.bg; applySel(); refresh(); };
 
     // person type chips (tap again to clear)
@@ -907,7 +1060,7 @@
       var parents = [];
       [0, 1].forEach(function (idx) {
         var nm = el('f_par' + idx).value.trim();
-        if (nm) parents.push({ name: nm, label: el('f_parlabel' + idx).value || 'other' });
+        if (nm) parents.push({ name: nm, label: el('f_parlabel' + idx).value || 'other', star: el('f_parstar' + idx).classList.contains('on') });
       });
       return {
         name: (function () { var fn = el('f_fname').value.trim().slice(0, 15); var ln = el('f_lname').value.trim().slice(0, 3); return fn + (ln ? ' ' + ln : ''); })(),
@@ -957,6 +1110,7 @@
       '<label>Child\u2019s name <span class="req">·required</span></label>' +
       '<input class="f" id="f_cname" value="' + attr(child.name) + '" autocomplete="off"/>' +
       '<button class="save" id="saveBtn">Save</button>' +
+      '<button class="rowbtn" id="hideBtn">Hide ' + esc(child.name) + ' for now</button>' +
       '<button class="danger" id="delBtn">Delete ' + esc(child.name) + ' and all their clubs</button>' +
       '<button class="cancel" id="cancelBtn">Cancel</button>';
     show();
@@ -964,6 +1118,14 @@
       return api('/children/' + child.id, { method: 'PUT', body: { name: el('f_cname').value.trim() } })
         .then(function () { return loadChildren().then(function () { state.view = 'home'; }); });
     });
+    el('hideBtn').onclick = function () {
+      api('/children/' + child.id, { method: 'PUT', body: { hidden: true } }).then(function () {
+        return loadChildren().then(function () {
+          state.childId = children.length ? children[0].id : null;
+          return loadClubs(state.childId);
+        }).then(function () { practiceStatus = null; loadPracticeStatus(); hide(); state.view = 'home'; render(); toast(child.name + ' is hidden \u2014 unhide any time from Account.'); });
+      }).catch(function (err) { alert(err.message); });
+    };
     el('delBtn').onclick = function () {
       if (!confirm('Delete ' + child.name + ' and every club and person under them? This can\u2019t be undone.')) return;
       api('/children/' + child.id, { method: 'DELETE' }).then(function () {
@@ -985,16 +1147,25 @@
       '<input class="f" id="f_gname" value="' + attr(c.name) + '" autocomplete="off"/>' +
       '<label>When / where <span class="opt">optional</span></label>' +
       '<input class="f" id="f_gsub" value="' + attr(c.sub) + '" autocomplete="off"/>' +
+      '<label>Class / group size <span class="opt">optional</span></label>' +
+      '<input class="f" id="f_gsize" type="number" min="1" inputmode="numeric" placeholder="e.g. 24" value="' + (c.expected_size ? attr(String(c.expected_size)) : '') + '"/>' +
+      '<p class="hint">Set how many are in the group, and we\u2019ll show how many you still have to add.</p>' +
       '<button class="save" id="saveBtn">Save</button>' +
+      '<button class="rowbtn" id="hideBtn">Hide this group for now</button>' +
       (isAdmin()
         ? '<button class="danger" id="delBtn">Delete this club and everyone in it</button>'
         : '<p class="hint" style="text-align:center">Only the account admin can delete a club.</p>') +
       '<button class="cancel" id="cancelBtn">Cancel</button>';
     show();
     wireSheet('f_gname', function () {
-      return api('/clubs/' + c.id, { method: 'PUT', body: { name: el('f_gname').value.trim(), sub: el('f_gsub').value.trim() } })
+      return api('/clubs/' + c.id, { method: 'PUT', body: { name: el('f_gname').value.trim(), sub: el('f_gsub').value.trim(), expected_size: el('f_gsize').value } })
         .then(function () { return loadClubs(state.childId).then(function () { state.view = 'club'; }); });
     });
+    el('hideBtn').onclick = function () {
+      api('/clubs/' + c.id, { method: 'PUT', body: { hidden: true } }).then(function () {
+        return loadClubs(state.childId).then(function () { practiceStatus = null; loadPracticeStatus(); hide(); state.view = 'home'; render(); window.scrollTo(0, 0); toast(c.name + ' is hidden \u2014 unhide any time from Account.'); });
+      }).catch(function (err) { alert(err.message); });
+    };
     var delBtn = el('delBtn');
     if (delBtn) delBtn.onclick = function () {
       if (!confirm('Delete ' + c.name + ' and everyone in it? This can\u2019t be undone.')) return;
@@ -1002,6 +1173,50 @@
         return loadClubs(state.childId).then(function () { hide(); state.view = 'home'; render(); window.scrollTo(0, 0); });
       }).catch(function (err) { alert(err.message); });
     };
+  }
+
+  // Manage hidden children & clubs (unhide).
+  function sheetHidden() {
+    el('sheet').innerHTML = '<div class="grab"></div><h3>Hidden children &amp; groups</h3>' +
+      '<p class="lead">Hidden items are kept safe but tucked out of the way. Unhide to bring one back.</p>' +
+      '<div id="hiddenList"><p class="hint" style="text-align:center">Loading\u2026</p></div>' +
+      '<button class="cancel" id="cancelBtn">Close</button>';
+    show();
+    el('cancelBtn').onclick = hide;
+    var admin = isAdmin();
+    Promise.all([
+      admin ? api('/children?includeHidden=1').then(function (r) { return r.filter(function (c) { return c.hidden; }); }).catch(function () { return []; }) : Promise.resolve([]),
+      api('/clubs/hidden').catch(function () { return []; })
+    ]).then(function (res) {
+      var hChildren = res[0], hClubs = res[1], html = '';
+      if (hChildren.length) {
+        html += '<div class="eyebrow">Children</div>';
+        hChildren.forEach(function (c) {
+          html += '<div class="hrow"><span class="hname">' + esc(c.name) + '</span>' +
+            '<button class="rebtn hunhide" data-kind="child" data-id="' + c.id + '">Unhide</button></div>';
+        });
+      }
+      if (hClubs.length) {
+        html += '<div class="eyebrow">Clubs &amp; classes</div>';
+        hClubs.forEach(function (k) {
+          html += '<div class="hrow"><span class="hname">' + esc(k.name) + '<span class="hsub"> \u00b7 ' + esc(k.child_name) + '</span></span>' +
+            '<button class="rebtn hunhide" data-kind="club" data-id="' + k.id + '">Unhide</button></div>';
+        });
+      }
+      if (!html) html = '<p class="hint" style="text-align:center;padding:14px 0">Nothing is hidden.</p>';
+      el('hiddenList').innerHTML = html;
+      Array.prototype.forEach.call(document.querySelectorAll('.hunhide'), function (b) {
+        b.onclick = function () {
+          b.disabled = true; b.textContent = '\u2026';
+          var kind = b.getAttribute('data-kind'), id = b.getAttribute('data-id');
+          var path = kind === 'child' ? '/children/' + id : '/clubs/' + id;
+          api(path, { method: 'PUT', body: { hidden: false } })
+            .then(function () { return kind === 'child' ? loadChildren() : loadClubs(state.childId); })
+            .then(function () { practiceStatus = null; loadPracticeStatus(); sheetHidden(); })
+            .catch(function (err) { b.disabled = false; b.textContent = 'Unhide'; alert(err.message); });
+        };
+      });
+    });
   }
 
   // Reorder children, or a child's clubs, with up/down controls.
@@ -1133,21 +1348,136 @@
     setTimeout(function () { ta.focus(); }, 60);
   }
 
+  /* ---------------- Quick-entry inbox ---------------- */
+  function parseInboxParents(raw) {
+    if (!raw) return [];
+    try { var a = JSON.parse(raw); return Array.isArray(a) ? a.map(function (e) { return e && e.name; }).filter(Boolean) : []; }
+    catch (e) { return []; }
+  }
+
+  function sheetQuickAdd() {
+    el('sheet').innerHTML = '<div class="grab"></div><h3>Quick add</h3>' +
+      '<p class="lead">Just the names \u2014 file them into the right group later. Great for the gate or the car.</p>' +
+      '<label>Child\u2019s name <span class="req">·required</span></label>' +
+      '<input class="f" id="f_qname" placeholder="e.g. Oscar" autocomplete="off"/>' +
+      '<label>Parent / carer <span class="opt">optional</span></label>' +
+      '<input class="f" id="f_qp0" maxlength="15" placeholder="e.g. Priya" autocomplete="off"/>' +
+      '<input class="f" id="f_qp1" maxlength="15" placeholder="Another parent / carer" autocomplete="off" style="margin-top:8px"/>' +
+      '<button class="save" id="qSave" disabled>Save</button>' +
+      '<button class="rowbtn" id="qSaveMore" disabled>Save &amp; add another</button>' +
+      '<button class="cancel" id="cancelBtn">Done</button>';
+    show();
+    var nm = el('f_qname');
+    el('cancelBtn').onclick = function () { hide(); state.view = 'home'; render(); };
+    function refresh() { var ok = nm.value.trim().length > 0; el('qSave').disabled = !ok; el('qSaveMore').disabled = !ok; }
+    nm.addEventListener('input', refresh);
+    setTimeout(function () { nm.focus(); }, 60);
+    function saveItem(again) {
+      var name = nm.value.trim(); if (!name) return;
+      var parents = [];
+      [0, 1].forEach(function (i) { var v = el('f_qp' + i).value.trim(); if (v) parents.push({ name: v }); });
+      el('qSave').disabled = true; el('qSaveMore').disabled = true;
+      api('/inbox', { method: 'POST', body: { name: name, parents: parents } }).then(function (it) {
+        inbox.push(it);
+        if (again) { sheetQuickAdd(); toast('Saved \u2014 add the next one.'); }
+        else { hide(); state.view = 'home'; render(); toast('Saved to Unsorted.'); }
+      }).catch(function (e) { refresh(); alert(e.message); });
+    }
+    el('qSave').onclick = function () { saveItem(false); };
+    el('qSaveMore').onclick = function () { saveItem(true); };
+  }
+
+  function sheetUnsorted() {
+    if (!inbox.length) { hide(); state.view = 'home'; render(); return; }
+    var rows = inbox.map(function (it) {
+      var ps = parseInboxParents(it.parents);
+      var sub = ps.length ? ps.join(' & ') : (it.note || '');
+      return '<div class="urow"><div class="umeta"><div class="uname">' + esc(it.name) + '</div>' +
+        (sub ? '<div class="unote">' + esc(sub) + '</div>' : '') + '</div>' +
+        '<div class="ubtns"><button class="ualloc" data-alloc="' + it.id + '">Allocate</button>' +
+        '<button class="udisc" data-disc="' + it.id + '" aria-label="Discard">' + ICON.trash + '</button></div></div>';
+    }).join('');
+    el('sheet').innerHTML = '<div class="grab"></div><h3>Unsorted</h3>' +
+      '<p class="lead">' + inbox.length + ' waiting to be filed. Allocate each one into a child\u2019s group.</p>' +
+      '<div class="ulist">' + rows + '</div>' +
+      '<button class="rowbtn rowbtn-icon" id="qMore">' + ICON.bolt + 'Quick add another</button>' +
+      '<button class="cancel" id="cancelBtn">Close</button>';
+    show();
+    el('cancelBtn').onclick = function () { hide(); state.view = 'home'; render(); };
+    el('qMore').onclick = sheetQuickAdd;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-alloc]'), function (b) {
+      b.onclick = function () { var it = inbox.filter(function (x) { return String(x.id) === b.getAttribute('data-alloc'); })[0]; if (it) sheetAllocate(it); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-disc]'), function (b) {
+      b.onclick = function () {
+        var id = b.getAttribute('data-disc');
+        api('/inbox/' + id, { method: 'DELETE' }).then(function () {
+          inbox = inbox.filter(function (x) { return String(x.id) !== id; });
+          sheetUnsorted();
+        }).catch(function (e) { alert(e.message); });
+      };
+    });
+  }
+
+  function sheetAllocate(item) {
+    if (!children.length) { alert('Add a child first, then you can file this person.'); return; }
+    var childOpts = children.map(function (c) { return '<option value="' + c.id + '">' + esc(c.name) + '</option>'; }).join('');
+    el('sheet').innerHTML = '<div class="grab"></div><h3>File ' + esc(item.name) + '</h3>' +
+      '<p class="lead">Pick where they belong. You can fine-tune the details afterwards.</p>' +
+      '<label>Child</label><div class="selectpill"><select id="al_child">' + childOpts + '</select><span class="av">' + ICON.down + '</span></div>' +
+      '<label>Group</label><div class="selectpill"><select id="al_club"></select><span class="av">' + ICON.down + '</span></div>' +
+      '<p class="hint" id="al_noclub" style="display:none">This child has no groups yet \u2014 add one for them first.</p>' +
+      '<button class="save" id="al_save" disabled>Add to group</button>' +
+      '<button class="cancel" id="cancelBtn">Back</button>';
+    show();
+    el('cancelBtn').onclick = sheetUnsorted;
+    function loadClubsFor(childId) {
+      el('al_save').disabled = true;
+      return api('/clubs?childId=' + childId).then(function (rows) {
+        var sel = el('al_club');
+        if (!rows.length) { sel.innerHTML = ''; sel.parentNode.style.display = 'none'; el('al_noclub').style.display = 'block'; el('al_save').disabled = true; }
+        else { sel.parentNode.style.display = ''; el('al_noclub').style.display = 'none'; sel.innerHTML = rows.map(function (k) { return '<option value="' + k.id + '">' + esc(k.name) + (k.sub ? ' \u2014 ' + esc(k.sub) : '') + '</option>'; }).join(''); el('al_save').disabled = false; }
+      }).catch(function () {});
+    }
+    el('al_child').onchange = function () { loadClubsFor(this.value); };
+    loadClubsFor(el('al_child').value);
+    el('al_save').onclick = function () {
+      var clubId = el('al_club').value; if (!clubId) return;
+      var childId = el('al_child').value;
+      el('al_save').disabled = true; el('al_save').textContent = 'Adding\u2026';
+      api('/people', { method: 'POST', body: { clubId: clubId, name: item.name, ptype: 'child', parents_list: parseInboxParents(item.parents).map(function (n) { return { name: n }; }), hooks: item.note || '' } })
+        .then(function () { return api('/inbox/' + item.id, { method: 'DELETE' }); })
+        .then(function () {
+          inbox = inbox.filter(function (x) { return x.id !== item.id; });
+          practiceStatus = null; loadPracticeStatus();
+          var refreshClubs = String(state.childId) === String(childId) ? loadClubs(state.childId) : Promise.resolve();
+          return refreshClubs;
+        })
+        .then(function () {
+          toast(item.name + ' filed.');
+          if (inbox.length) sheetUnsorted(); else { hide(); state.view = 'home'; render(); }
+        })
+        .catch(function (e) { el('al_save').disabled = false; el('al_save').textContent = 'Add to group'; alert(e.message); });
+    };
+  }
+
   function sheetAccount() {
     var admin = isAdmin();
+    var members = household.members || (household.partner ? [household.partner] : []);
     var roleLine = household.role
       ? (admin
-          ? (household.partner
-              ? 'You\u2019re the <b>admin</b>. <b>' + esc(household.partner.email) + '</b> is on this account as your partner.'
+          ? (members.length
+              ? 'You\u2019re the <b>admin</b>. ' + (members.length === 1 ? 'One other person is' : members.length + ' others are') + ' on this account.'
               : 'You\u2019re the <b>admin</b> of this account.')
-          : 'You\u2019re a <b>partner</b> on <b>' + esc(household.adminEmail || 'the admin') + '</b>\u2019s account.')
+          : 'You\u2019re on <b>' + esc(household.adminEmail || 'the admin') + '</b>\u2019s account.')
       : '';
 
     var partnerBlock;
     if (admin) {
-      partnerBlock = household.partner
-        ? '<button class="rowbtn" id="acRemovePartner">Remove partner (' + esc(household.partner.email) + ')</button>'
-        : '<button class="rowbtn" id="acInvite">Invite my partner</button>';
+      partnerBlock = members.map(function (m) {
+        return '<button class="rowbtn rowbtn-rm" data-remove="' + attr(m.email) + '">Remove <b>' + esc(m.email) + '</b><span class="rmx">' + ICON.trash + '</span></button>';
+      }).join('');
+      if (members.length < 2) partnerBlock += '<button class="rowbtn" id="acInvite">Invite someone (partner, carer\u2026)</button>';
     } else {
       partnerBlock = '<button class="rowbtn" id="acLeave">Leave this account</button>';
     }
@@ -1156,19 +1486,23 @@
       '<div class="grab"></div><h3>Account</h3>' +
       '<p class="lead">Signed in as <b>' + esc(me ? me.email : '') + '</b>' + (me && me.email_verified ? '' : ' \u00b7 not yet verified') + '.</p>' +
       (roleLine ? '<p class="rolenote">' + roleLine + '</p>' : '') +
+      '<button class="rowbtn rowbtn-icon" id="acPractice">' + ICON.brain + 'Memory Practice</button>' +
       partnerBlock +
       (admin ? '<button class="rowbtn" id="acExport">Export my data (JSON)</button>' : '') +
       (admin ? (hasDemo()
         ? '<button class="rowbtn" id="acDemo">Remove sample data</button>'
         : '<button class="rowbtn" id="acDemo">Load sample data</button>') : '') +
       '<button class="rowbtn" id="acFeedback">Send feedback or a suggestion</button>' +
-      '<button class="rowbtn" id="acSignout">Sign out</button>' +
+      '<button class="rowbtn" id="acHidden">Hidden children &amp; groups</button>' +
+      '<button class="btn-signout" id="acSignout">Sign out</button>' +
       (admin ? '<button class="danger" id="acDelete">Delete this account</button>' : '') +
       '<button class="cancel" id="cancelBtn">Close</button>' +
-      '<p class="sheetlegal"><a href="/privacy" target="_blank" rel="noopener">Privacy</a> \u00b7 <a href="/terms" target="_blank" rel="noopener">Terms</a> \u00b7 <a href="/cookies" target="_blank" rel="noopener">Cookies</a> \u00b7 <a href="/delete-account" target="_blank" rel="noopener">Delete account</a> \u00b7 <a href="mailto:team@parentrecall.com">Contact</a></p>';
+      '<p class="sheetlegal"><a href="/support" target="_blank" rel="noopener">Support</a> \u00b7 <a href="/privacy" target="_blank" rel="noopener">Privacy</a> \u00b7 <a href="/terms" target="_blank" rel="noopener">Terms</a> \u00b7 <a href="/cookies" target="_blank" rel="noopener">Cookies</a> \u00b7 <a href="/child-safety" target="_blank" rel="noopener">Child safety</a> \u00b7 <a href="/delete-account" target="_blank" rel="noopener">Delete account</a> \u00b7 <a href="mailto:team@parentrecall.com">Contact</a></p>';
     show();
     el('cancelBtn').onclick = hide;
     el('acSignout').onclick = function () { hide(); signOut(); };
+    el('acPractice').onclick = function () { hide(); startPractice(); };
+    var acHidden = el('acHidden'); if (acHidden) acHidden.onclick = sheetHidden;
     el('acFeedback').onclick = sheetFeedback;
     var acDemo = el('acDemo'); if (acDemo) acDemo.onclick = function () {
       if (hasDemo()) { acDemo.disabled = true; acDemo.textContent = 'Removing\u2026'; hide(); clearDemo(); }
@@ -1178,13 +1512,15 @@
     var inviteBtn = el('acInvite');
     if (inviteBtn) inviteBtn.onclick = sheetInvitePartner;
 
-    var removeBtn = el('acRemovePartner');
-    if (removeBtn) removeBtn.onclick = function () {
-      if (!confirm('Remove ' + household.partner.email + '? They\u2019ll lose access, but everything they added stays on the account.')) return;
-      api('/auth/household/associate', { method: 'DELETE' }).then(function () {
-        return loadMe().then(function () { toast('Partner removed.'); sheetAccount(); });
-      }).catch(function (err) { alert(err.message); });
-    };
+    Array.prototype.forEach.call(document.querySelectorAll('[data-remove]'), function (b) {
+      b.onclick = function () {
+        var email = b.getAttribute('data-remove');
+        if (!confirm('Remove ' + email + '? They\u2019ll lose access, but everything they added stays on the account.')) return;
+        api('/auth/household/associate', { method: 'DELETE', body: { email: email } }).then(function () {
+          return loadMe().then(function () { toast('Removed.'); sheetAccount(); });
+        }).catch(function (err) { alert(err.message); });
+      };
+    });
 
     var leaveBtn = el('acLeave');
     if (leaveBtn) leaveBtn.onclick = function () {
@@ -1209,8 +1545,8 @@
 
     var deleteBtn = el('acDelete');
     if (deleteBtn) deleteBtn.onclick = function () {
-      var warn = household.partner
-        ? 'Delete this account and ALL its data permanently? This also removes your partner\u2019s access. This cannot be undone.'
+      var warn = (household.members && household.members.length)
+        ? 'Delete this account and ALL its data permanently? This also removes access for everyone else on the account. This cannot be undone.'
         : 'Delete your account and ALL your data permanently? This cannot be undone.';
       if (!confirm(warn)) return;
       if (!confirm('Are you absolutely sure? Everything will be erased.')) return;
@@ -1248,56 +1584,103 @@
   function downloadTemplate() {
     if (typeof XLSX === 'undefined') { alert('Spreadsheet tools are still loading — try again in a moment.'); return; }
     var people = XLSX.utils.aoa_to_sheet([
-      ['name', 'role', 'parents', 'hooks', 'birthday'],
-      ['Oscar', "Charlotte's best friend", 'Priya (mum), Dan (dad)', 'Red Audi, always in running gear, sits front-left', '12 March'],
-      ['Maya', 'In her class \u2014 wears glasses', 'Tom & Sarah', 'Identical twin (Mia has no glasses)', ''],
-      ['Coach Dan', 'Swim coach', '', 'Very tall, loud whistle, calls everyone "champ"', ''],
-      ['', '', '', '', '']
+      ['First name', 'Last name', 'Type', 'Who are they?', 'Parent / carer 1', 'Parent / carer 2', 'What jogs your memory', 'Birthday'],
+      ['Oscar', 'Smith', 'Child', "Charlotte's best friend", 'Priya', 'Dan', 'Red Audi \u00b7 always in running gear \u00b7 sits front-left', '12 March'],
+      ['Maya', '', 'Child', 'In her class \u2014 wears glasses', 'Tom', 'Sarah', 'Identical twin (Mia has no glasses)', ''],
+      ['Dan', '', 'Coach', 'Swim coach', '', '', 'Very tall \u00b7 loud whistle \u00b7 calls everyone \u201cchamp\u201d', ''],
+      ['', '', '', '', '', '', '', '']
     ]);
-    people['!cols'] = [{ wch: 16 }, { wch: 26 }, { wch: 24 }, { wch: 44 }, { wch: 14 }];
+    people['!cols'] = [{ wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 26 }, { wch: 18 }, { wch: 18 }, { wch: 44 }, { wch: 12 }];
     var info = XLSX.utils.aoa_to_sheet([
       ['ParentRecall \u2014 import template'],
       [''],
-      ['Fill in one row per person on the "People" tab.'],
-      ['Only "name" is required. Leave anything you don\u2019t know yet blank.'],
+      ['Fill in one row per person on the \u201cPeople\u201d tab.'],
+      ['Only \u201cFirst name\u201d is required. Leave anything you don\u2019t know yet blank.'],
       [''],
       ['Column', 'What to put'],
-      ['name', 'The person\u2019s name \u2014 a child, a parent, a coach\u2026'],
-      ['role', 'Who they are, in a few words'],
-      ['parents', 'Parents or carers'],
-      ['hooks', 'The little details that jog your memory \u2014 the car, the job, where they sit'],
-      ['birthday', 'Free text, e.g. "12 March"'],
+      ['First name', 'Their first name. This is the only required column.'],
+      ['Last name', 'Optional. Only the first 3 letters are kept, for privacy \u2014 \u201cSmith\u201d becomes \u201cSmi\u201d. Type the whole surname if you like; we shorten it for you.'],
+      ['Type', 'Optional. One of: Child, Parent, Carer, Teacher, Instructor, Coach, Assistant, Other.'],
+      ['Who are they?', 'Optional. A few words \u2014 e.g. \u201cCharlotte\u2019s best friend\u201d or \u201cthe swim coach\u201d.'],
+      ['Parent / carer 1', 'Optional. A parent or carer\u2019s first name.'],
+      ['Parent / carer 2', 'Optional. A second parent or carer, if there is one.'],
+      ['What jogs your memory', 'Optional. The little details that bring them back \u2014 the car, the job, where they sit, who they\u2019re friends with.'],
+      ['Birthday', 'Optional. Free text, e.g. \u201c12 March\u201d.'],
       [''],
-      ['Then in the app: open the club, tap "Import from a spreadsheet", and upload this file.']
+      ['Then in the app: open the club, tap \u201cImport from a spreadsheet\u201d, and upload this file.']
     ]);
-    info['!cols'] = [{ wch: 14 }, { wch: 72 }];
+    info['!cols'] = [{ wch: 20 }, { wch: 80 }];
     var wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, people, 'People');
     XLSX.utils.book_append_sheet(wb, info, 'How to use');
     XLSX.writeFile(wb, 'parentrecall-template.xlsx');
   }
 
-  // Map a sheet (array-of-arrays) to person objects, tolerant of column order/extra columns.
+  // Privacy clamp, mirrors the server: first word up to 15 chars, later words (surnames) to 3.
+  function clampNameClient(s) {
+    return String(s || '').trim().replace(/\s+/g, ' ').split(' ')
+      .map(function (w, i) { return i === 0 ? w.slice(0, 15) : w.slice(0, 3); })
+      .join(' ').trim().slice(0, 120);
+  }
+
+  // Map a free-text "Type" cell to one of the app's person types.
+  function mapType(v) {
+    var t = String(v || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (!t) return '';
+    if (t.indexOf('child') >= 0 || t === 'kid' || t === 'pupil' || t === 'student') return 'child';
+    if (t.indexOf('parent') >= 0 || t.indexOf('carer') >= 0 || t.indexOf('guardian') >= 0 || t === 'mum' || t === 'mother' || t === 'dad' || t === 'father') return 'parent';
+    if (t.indexOf('teacher') >= 0) return 'teacher';
+    if (t.indexOf('instructor') >= 0) return 'instructor';
+    if (t.indexOf('coach') >= 0) return 'coach';
+    if (t.indexOf('assistant') >= 0 || t === 'ta' || t.indexOf('helper') >= 0) return 'assistant';
+    if (t.indexOf('other') >= 0) return 'other';
+    return '';
+  }
+
+  // Map a sheet (array-of-arrays) to person objects. Tolerant of column order,
+  // friendly or legacy headers, extra columns, and blank optionals.
   function rowsToPeople(rows) {
     if (!rows || !rows.length) return [];
-    var header = (rows[0] || []).map(function (h) { return String(h == null ? '' : h).trim().toLowerCase(); });
-    var idx = {};
-    ['name', 'role', 'parents', 'hooks', 'birthday'].forEach(function (f) { idx[f] = header.indexOf(f); });
-    var hasHeader = idx.name >= 0 || header.indexOf('role') >= 0 || header.indexOf('hooks') >= 0;
+    function norm(h) { return String(h == null ? '' : h).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+    var header = (rows[0] || []).map(norm);
+    function find(keys) { for (var k = 0; k < keys.length; k++) { var ix = header.indexOf(keys[k]); if (ix >= 0) return ix; } return -1; }
+    var col = {
+      first: find(['firstname', 'first', 'forename', 'givenname']),
+      last: find(['lastname', 'last', 'surname', 'familyname']),
+      name: find(['name', 'fullname']),
+      ptype: find(['type']),
+      role: find(['whoarethey', 'who', 'role', 'relationship', 'description']),
+      p1: find(['parentcarer1', 'parent1', 'carer1', 'parenta']),
+      p2: find(['parentcarer2', 'parent2', 'carer2', 'parentb']),
+      parentsText: find(['parents', 'parentscarers', 'parentcarer', 'carer', 'carers']),
+      hooks: find(['whatjogsyourmemory', 'hooks', 'notes', 'details', 'memory', 'memoryjoggers']),
+      birthday: find(['birthday', 'bday', 'dob', 'dateofbirth', 'birthdate'])
+    };
+    var hasHeader = col.first >= 0 || col.name >= 0 || col.role >= 0 || col.hooks >= 0 || col.ptype >= 0 || col.birthday >= 0;
     var start = hasHeader ? 1 : 0;
     var out = [];
+    var r;
+    function cell(ix) { return ix >= 0 ? String(r[ix] == null ? '' : r[ix]).trim() : ''; }
     for (var i = start; i < rows.length; i++) {
-      var r = rows[i] || [];
-      function cell(f) { return idx[f] >= 0 ? String(r[idx[f]] == null ? '' : r[idx[f]]).trim() : ''; }
-      var name = idx.name >= 0 ? cell('name') : String(r[0] == null ? '' : r[0]).trim();
+      r = rows[i] || [];
+      var name;
+      if (col.first >= 0 || col.last >= 0) name = clampNameClient((cell(col.first) + ' ' + cell(col.last)).trim());
+      else if (col.name >= 0) name = clampNameClient(cell(col.name));
+      else name = clampNameClient(String(r[0] == null ? '' : r[0]).trim());
       if (!name) continue;
-      out.push({
-        name: name.slice(0, 120),
-        role: cell('role'),
-        parents: cell('parents'),
-        hooks: cell('hooks'),
-        birthday: cell('birthday')
-      });
+      var person = {
+        name: name,
+        ptype: mapType(cell(col.ptype)),
+        role: cell(col.role).slice(0, 300),
+        hooks: cell(col.hooks).slice(0, 2000),
+        birthday: cell(col.birthday).slice(0, 60)
+      };
+      var p1 = cell(col.p1), p2 = cell(col.p2), plist = [];
+      if (p1) plist.push({ name: p1.slice(0, 15), label: 'other' });
+      if (p2) plist.push({ name: p2.slice(0, 15), label: 'other' });
+      if (plist.length) person.parents_list = plist;
+      else if (col.parentsText >= 0) person.parents = cell(col.parentsText).slice(0, 300);
+      out.push(person);
     }
     return out;
   }
@@ -1423,6 +1806,15 @@
       return sheetPerson(false);
     };
     var gsDemo = el('gsDemo'); if (gsDemo) gsDemo.onclick = function () { gsDemo.disabled = true; gsDemo.textContent = 'Loading sample data\u2026'; seedDemo(); };
+    var starToggle = el('starToggle');
+    if (starToggle) starToggle.onclick = function () {
+      var p = personById(state.personId); if (!p) return;
+      starToggle.disabled = true;
+      api('/people/' + p.id, { method: 'PUT', body: { starred: !p.starred } })
+        .then(function () { return loadPeople(state.clubId); })
+        .then(function () { render(); })
+        .catch(function (e) { starToggle.disabled = false; alert(e.message); });
+    };
     var editPerson = el('editPerson'); if (editPerson) editPerson.onclick = function () { sheetPerson(true); };
     var delPerson = el('delPerson'); if (delPerson) delPerson.onclick = function () {
       var p = personById(state.personId);
@@ -1463,6 +1855,16 @@
 
     // Quiz screen
     var qReveal = el('qReveal'); if (qReveal) qReveal.onclick = function () { quiz.show = true; render(); };
+    var practiceStart = el('practiceStart'); if (practiceStart) practiceStart.onclick = startPractice;
+    var quickAdd = el('quickAdd'); if (quickAdd) quickAdd.onclick = sheetQuickAdd;
+    var unsortedBtn = el('unsortedBtn'); if (unsortedBtn) unsortedBtn.onclick = sheetUnsorted;
+    var practiceStop = el('practiceStop'); if (practiceStop) practiceStop.onclick = function () { practice = null; state.view = 'home'; loadPracticeStatus().then(render); };
+    var practiceNext = el('practiceNext'); if (practiceNext) practiceNext.onclick = nextPractice;
+    var practiceDone = el('practiceDone'); if (practiceDone) practiceDone.onclick = function () { practice = null; state.view = 'home'; render(); };
+    Array.prototype.forEach.call(document.querySelectorAll('.popt'), function (b) {
+      b.onclick = function () { answerPractice(b.getAttribute('data-opt')); };
+    });
+
     var qGot = el('qGot'); if (qGot) qGot.onclick = function () { answerQuiz(true); };
     var qMiss = el('qMiss'); if (qMiss) qMiss.onclick = function () { answerQuiz(false); };
     var quizMissed = el('quizMissed'); if (quizMissed) quizMissed.onclick = function () { startQuiz(quiz.missed.slice(), quiz.color); };
@@ -1509,6 +1911,8 @@
           return loadClubs(state.childId);
         }
       })
+      .then(function () { return loadPracticeStatus(); })
+      .then(function () { return loadInbox(); })
       .then(function () {
         state.view = 'home';
         render();

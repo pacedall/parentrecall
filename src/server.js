@@ -32,6 +32,8 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/children', require('./routes/children'));
 app.use('/api/clubs', require('./routes/clubs'));
 app.use('/api/people', require('./routes/people'));
+app.use('/api/practice', require('./routes/practice'));
+app.use('/api/inbox', require('./routes/inbox'));
 app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/demo', require('./routes/demo'));
@@ -50,6 +52,10 @@ app.get('/privacy-policy', (req, res) => res.sendFile(path.join(publicDir, 'priv
 app.get('/terms-and-conditions', (req, res) => res.sendFile(path.join(publicDir, 'terms.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(publicDir, 'admin.html')));
 app.get('/data-deletion', (req, res) => res.sendFile(path.join(publicDir, 'delete-account.html')));
+app.get('/support', (req, res) => res.sendFile(path.join(publicDir, 'support.html')));
+app.get('/help', (req, res) => res.sendFile(path.join(publicDir, 'support.html')));
+app.get('/child-safety', (req, res) => res.sendFile(path.join(publicDir, 'child-safety.html')));
+app.get('/child-safety-standards', (req, res) => res.sendFile(path.join(publicDir, 'child-safety.html')));
 
 app.get('*', (req, res) => res.sendFile(path.join(publicDir, 'index.html')));
 

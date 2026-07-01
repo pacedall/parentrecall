@@ -154,7 +154,7 @@ router.get('/me', requireAuth, async (req, res) => {
   // refresh last-access at most once an hour to keep writes light
   db.query("UPDATE users SET last_accessed_at = now() WHERE id = $1 AND (last_accessed_at IS NULL OR last_accessed_at < now() - interval '1 hour')", [req.userId]).catch(function () {});
 
-  let household = { role: null, isAdmin: false, partner: null, adminEmail: null };
+  let household = { role: null, isAdmin: false, partner: null, members: [], adminEmail: null };
   const mem = await db.query('SELECT household_id, role FROM household_members WHERE user_id = $1', [req.userId]);
   if (mem.rows[0]) {
     const hid = mem.rows[0].household_id;
@@ -167,8 +167,9 @@ router.get('/me', requireAuth, async (req, res) => {
     );
     others.rows.forEach(function (o) {
       if (o.role === 'admin') household.adminEmail = o.email;
-      else household.partner = { email: o.email };
+      else household.members.push({ email: o.email });
     });
+    household.partner = household.members[0] || null; // back-compat
   }
   res.json({ user: publicUser(rows[0]), household: household });
 });
@@ -312,7 +313,7 @@ router.post('/household/invite', authLimiter, requireAuth, loadHousehold, requir
   if (meRow.rows[0] && meRow.rows[0].email === email) return res.status(400).json({ error: 'That\u2019s your own email.' });
 
   const cnt = await db.query('SELECT COUNT(*)::int AS n FROM household_members WHERE household_id = $1', [req.householdId]);
-  if (cnt.rows[0].n >= 2) return res.status(409).json({ error: 'You already have a partner on this account. Remove them first.' });
+  if (cnt.rows[0].n >= 3) return res.status(409).json({ error: 'This account already has the maximum of three people. Remove someone first.' });
 
   const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
   if (existing.rows[0]) return res.status(409).json({ error: 'That email already has a ParentRecall account and can\u2019t be added.' });
@@ -368,8 +369,11 @@ async function detachMember(householdId, fromUserId, toUserId) {
 // DELETE /api/auth/household/associate  — admin removes the partner (data is kept)
 router.delete('/household/associate', requireAuth, loadHousehold, requireAdmin, async (req, res) => {
   try {
-    const assoc = await db.query("SELECT user_id FROM household_members WHERE household_id = $1 AND role = 'associate'", [req.householdId]);
-    if (!assoc.rows[0]) return res.status(404).json({ error: 'No partner to remove.' });
+    const email = (req.body && req.body.email ? String(req.body.email) : '').trim().toLowerCase();
+    const assoc = email
+      ? await db.query("SELECT hm.user_id FROM household_members hm JOIN users u ON u.id = hm.user_id WHERE hm.household_id = $1 AND hm.role = 'associate' AND lower(u.email) = $2", [req.householdId, email])
+      : await db.query("SELECT user_id FROM household_members WHERE household_id = $1 AND role = 'associate'", [req.householdId]);
+    if (!assoc.rows[0]) return res.status(404).json({ error: 'No one to remove.' });
     await detachMember(req.householdId, assoc.rows[0].user_id, req.userId);
     return res.json({ ok: true });
   } catch (err) {

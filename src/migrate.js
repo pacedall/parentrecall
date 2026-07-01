@@ -48,6 +48,13 @@ async function migrate() {
     await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS lock_until TIMESTAMPTZ');
     await db.query('ALTER TABLE children ADD COLUMN IF NOT EXISTS sort_order INTEGER');
     await db.query('ALTER TABLE clubs ADD COLUMN IF NOT EXISTS sort_order INTEGER');
+    await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS practice_streak INTEGER NOT NULL DEFAULT 0');
+    await db.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS practice_last_day DATE');
+    await db.query('ALTER TABLE children ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT false');
+    await db.query('ALTER TABLE clubs ADD COLUMN IF NOT EXISTS hidden BOOLEAN NOT NULL DEFAULT false');
+    await db.query('ALTER TABLE clubs ADD COLUMN IF NOT EXISTS expected_size INTEGER');
+    await db.query('ALTER TABLE people ADD COLUMN IF NOT EXISTS starred BOOLEAN NOT NULL DEFAULT false');
+    await db.query("ALTER TABLE inbox ADD COLUMN IF NOT EXISTS parents TEXT NOT NULL DEFAULT ''");
   } catch (e) {
     // ignore — columns already exist or engine lacks ADD COLUMN IF NOT EXISTS
   }

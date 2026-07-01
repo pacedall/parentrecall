@@ -362,3 +362,94 @@ input.f:focus-visible,textarea.f:focus-visible,.selectpill select:focus-visible{
 .rebtns{flex:0 0 auto;display:flex;gap:6px}
 .rebtn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--hair);background:#fff;border-radius:10px;color:var(--navy);cursor:pointer}
 .rebtn:disabled{opacity:.35;cursor:not-allowed}
+
+/* ---- Memory Practice card (home) ---- */
+.practicecard{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:0;cursor:pointer;
+  background:linear-gradient(135deg,#18306C,#244a9e);color:#fff;border-radius:18px;padding:16px;margin:4px 0 16px;
+  box-shadow:0 10px 24px rgba(24,48,108,.22)}
+.practicecard.done{background:linear-gradient(135deg,#274a86,#3a6ab0)}
+.pcicon{flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:#fff}
+.pcmeta{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pctitle{font-family:Poppins,sans-serif;font-weight:700;font-size:1rem;display:flex;align-items:center;gap:8px}
+.pcsub{font-size:.82rem;color:rgba(255,255,255,.82);line-height:1.35}
+.pcstreak{display:inline-flex;align-items:center;gap:3px;font-size:.74rem;font-weight:700;background:rgba(255,255,255,.18);color:#ffd9a8;padding:1px 8px;border-radius:999px}
+.pcstreak svg{color:#ffb24d}
+.pcgo{flex:0 0 auto;display:inline-flex;align-items:center;gap:2px;font-weight:700;font-size:.9rem;background:rgba(255,255,255,.16);padding:8px 8px 8px 13px;border-radius:999px}
+
+/* ---- Practice screen ---- */
+.practice{max-width:520px;margin:0 auto;padding:8px 0 24px}
+.pprog{display:inline-flex;gap:6px;align-items:center}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--hair)}
+.pdot.on{background:#34a853}
+.pdot.cur{background:var(--navy)}
+.pqcard{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:18px 16px 8px}
+.pqname{font-family:Poppins,sans-serif;font-weight:700;font-size:1.25rem;color:var(--navy)}
+.pqrole{font-size:.95rem;color:var(--navy);font-weight:600}
+.pqhooks{font-size:.95rem;color:var(--muted);line-height:1.45;max-width:380px}
+.pqprompt{margin-top:6px;font-family:Poppins,sans-serif;font-weight:700;font-size:1.15rem;color:var(--navy)}
+.popts{display:flex;flex-direction:column;gap:10px;margin:14px 0 0}
+.popt{display:block;width:100%;padding:15px 16px;border:2px solid var(--hair);background:#fff;border-radius:14px;
+  font-size:1rem;font-weight:600;color:var(--navy);cursor:pointer;transition:transform .04s,border-color .15s,background .15s;text-align:left}
+.popt:active{transform:scale(.99)}
+.popt.right{border-color:#34a853;background:#eaf7ee;color:#1e7a38}
+.popt.wrong{border-color:#e2574c;background:#fdeceb;color:#b5362c}
+.popt.dim{opacity:.5}
+.popt:disabled{cursor:default}
+.pqreveal{text-align:center;margin-top:14px;font-size:1rem;color:var(--navy)}
+.presult{display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;padding:48px 20px;max-width:420px;margin:0 auto}
+.prbig{font-family:Poppins,sans-serif;font-weight:800;font-size:3.2rem;color:var(--navy);line-height:1}
+.prstreak{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#c1671b;background:#fff2e2;padding:6px 14px;border-radius:999px}
+.prstreak svg{color:#ff9f40}
+.prmsg{color:var(--muted);font-size:1rem;line-height:1.5}
+
+/* Sign out — clear blue & white */
+.btn-signout{width:100%;text-align:center;background:#1E4C83;border:0;color:#fff;font-weight:700;font-size:15px;padding:14px;border-radius:13px;margin-bottom:10px;font-family:Poppins,sans-serif;cursor:pointer}
+.btn-signout:active{background:#18306C}
+/* Account row with an icon (Memory Practice) */
+.rowbtn-icon{display:flex;align-items:center;gap:9px;text-align:left}
+.rowbtn-icon svg{flex:0 0 auto;color:var(--navy)}
+/* Club size progress badge */
+.count.short{color:#b9770e}
+.count .of{opacity:.65;font-weight:600}
+/* Club screen "still to add" note */
+.sizenote{margin:0 0 12px;padding:9px 12px;border-radius:10px;background:#fff6e9;color:#9a6a12;font-size:.86rem;font-weight:600;text-align:center}
+.sizenote b{font-weight:800}
+.sizenote.done{background:#eaf7ee;color:#1e7a38}
+/* Hidden-items manager */
+.hrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;background:#F4F6FB;border:1px solid var(--hair);border-radius:12px;margin-bottom:8px}
+.hname{font-weight:600;color:var(--navy);min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hsub{font-weight:400;color:var(--muted);font-size:.85rem}
+.hunhide{flex:0 0 auto;width:auto;height:auto;border:1px solid var(--navy);background:#fff;color:var(--navy);border-radius:999px;padding:6px 15px;font-weight:700;font-size:.85rem;cursor:pointer}
+
+/* ---- Third member: remove rows ---- */
+.rowbtn-rm{display:flex;align-items:center;gap:6px}
+.rowbtn-rm .rmx{margin-left:auto;color:var(--red);display:inline-flex}
+.rowbtn-rm .rmx svg{width:16px;height:16px}
+
+/* ---- Stars: best friends & friendly parents ---- */
+.starbtn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin:0 0 14px;padding:11px;border:1.5px solid var(--hair);background:#fff;color:var(--muted);border-radius:13px;font-weight:700;font-size:14px;font-family:Poppins,sans-serif;cursor:pointer}
+.starbtn svg{color:#cbd2e0}
+.starbtn.on{border-color:#f0b431;background:#fff8e8;color:#a9740a}
+.starbtn.on svg{color:#f5b301}
+.starbadge{display:inline-flex;vertical-align:middle;margin-right:5px;color:#f5b301}
+.starbadge svg{width:14px;height:14px}
+.pstar{display:inline-flex;vertical-align:middle;color:#f5b301}
+.pstar svg{width:13px;height:13px}
+.parstar{flex:0 0 auto;width:44px;border:1px solid var(--hair);background:#fff;color:#cbd2e0;border-radius:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.parstar.on{border-color:#f0b431;background:#fff8e8;color:#f5b301}
+
+/* ---- Quick-entry inbox ---- */
+.quickrow{display:flex;gap:10px;margin:0 0 16px}
+.quickadd{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:8px;background:#0E7C5A;border:0;color:#fff;font-weight:700;font-size:15px;font-family:Poppins,sans-serif;padding:14px;border-radius:14px;cursor:pointer;box-shadow:0 6px 16px rgba(14,124,90,.22)}
+.quickadd svg{color:#fff}
+.unsortedbtn{flex:0 0 auto;display:flex;align-items:center;gap:8px;background:#fff6e9;border:1.5px solid #f0d8a8;color:#9a6a12;font-weight:700;font-size:14px;padding:14px 16px;border-radius:14px;cursor:pointer}
+.unsortedbtn .ub{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#e7920e;color:#fff;font-size:12px}
+.ulist{display:flex;flex-direction:column;gap:9px;margin-bottom:6px}
+.urow{display:flex;align-items:center;gap:10px;padding:11px 13px;background:#F4F6FB;border:1px solid var(--hair);border-radius:13px}
+.umeta{flex:1 1 auto;min-width:0}
+.uname{font-weight:700;color:var(--navy);overflow:hidden;text-overflow:ellipsis}
+.unote{font-size:.85rem;color:var(--muted);margin-top:2px}
+.ubtns{flex:0 0 auto;display:flex;align-items:center;gap:4px}
+.ualloc{border:0;background:#18306C;color:#fff;font-weight:700;font-size:.85rem;padding:9px 15px;border-radius:999px;cursor:pointer}
+.udisc{border:0;background:transparent;color:#bcbcbc;cursor:pointer;padding:6px;display:flex;align-items:center}
+.udisc svg{width:18px;height:18px}

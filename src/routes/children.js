@@ -9,12 +9,13 @@ router.use(loadHousehold);
 
 // GET /api/children  -> household's children with club counts (both roles)
 router.get('/', async (req, res) => {
+  const includeHidden = req.query.includeHidden === '1' || req.query.includeHidden === 'true';
   const { rows } = await db.query(
-    `SELECT c.id, c.name, c.is_demo, COUNT(cl.id)::int AS club_count
+    `SELECT c.id, c.name, c.is_demo, c.hidden, COUNT(cl.id)::int AS club_count
      FROM children c
-     LEFT JOIN clubs cl ON cl.child_id = c.id
-     WHERE c.household_id = $1
-     GROUP BY c.id, c.name, c.is_demo, c.created_at, c.sort_order
+     LEFT JOIN clubs cl ON cl.child_id = c.id AND cl.hidden = false
+     WHERE c.household_id = $1 ${includeHidden ? '' : 'AND c.hidden = false'}
+     GROUP BY c.id, c.name, c.is_demo, c.hidden, c.created_at, c.sort_order
      ORDER BY c.sort_order ASC NULLS LAST, c.created_at ASC, c.id ASC`,
     [req.householdId]
   );
@@ -49,11 +50,23 @@ router.post('/reorder', requireAdmin, async (req, res) => {
 });
 
 router.put('/:id', requireAdmin, async (req, res) => {
+  // Toggle hidden without requiring a name
+  if (req.body.hidden !== undefined && req.body.name === undefined) {
+    const { rows: hr } = await db.query(
+      'UPDATE children SET hidden = $1 WHERE id = $2 AND household_id = $3 RETURNING id, name, hidden',
+      [!!req.body.hidden, req.params.id, req.householdId]
+    );
+    if (!hr[0]) return res.status(404).json({ error: 'Not found.' });
+    return res.json(hr[0]);
+  }
   const name = (req.body.name || '').trim();
   if (!name) return res.status(400).json({ error: 'A name is needed.' });
   const { rows } = await db.query(
-    'UPDATE children SET name = $1 WHERE id = $2 AND household_id = $3 RETURNING id, name',
-    [name, req.params.id, req.householdId]
+    'UPDATE children SET name = $1' + (req.body.hidden !== undefined ? ', hidden = $4' : '') +
+    ' WHERE id = $2 AND household_id = $3 RETURNING id, name, hidden',
+    req.body.hidden !== undefined
+      ? [name, req.params.id, req.householdId, !!req.body.hidden]
+      : [name, req.params.id, req.householdId]
   );
   if (!rows[0]) return res.status(404).json({ error: 'Not found.' });
   res.json(rows[0]);
