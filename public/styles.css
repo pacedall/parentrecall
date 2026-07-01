@@ -99,6 +99,11 @@ label{display:block;font-size:12px;font-weight:700;letter-spacing:.03em;text-tra
 .req{color:var(--orange)}
 .opt{color:#C2CADB;text-transform:none;letter-spacing:0;font-weight:500}
 input.f,textarea.f{width:100%;font-family:inherit;font-size:16px;color:var(--ink);background:#F4F6FB;border:1.5px solid var(--hair);border-radius:12px;padding:13px;outline:none}
+.bdayrow{display:flex;gap:10px}
+.bdaysel{flex:1 1 0;min-width:0;position:relative}
+.bdaysel select{appearance:none;-webkit-appearance:none;width:100%;font-family:inherit;font-weight:600;font-size:16px;color:var(--ink);background:#F4F6FB;border:1.5px solid var(--hair);border-radius:12px;padding:13px 34px 13px 13px;outline:none}
+.bdaysel select:focus{border-color:var(--orange)}
+.bdaysel .av{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted)}
 input.f:focus,textarea.f:focus{border-color:var(--orange);background:#fff}
 textarea.f{resize:none;line-height:1.45}
 .hint{font-size:11.5px;color:var(--muted);margin:6px 2px 0;font-weight:500}
@@ -366,7 +371,7 @@ input.f:focus-visible,textarea.f:focus-visible,.selectpill select:focus-visible{
 
 /* ---- Memory Practice card (home) ---- */
 .practicecard{display:flex;align-items:center;gap:14px;text-align:left;border:0;cursor:pointer;
-  background:linear-gradient(135deg,#18306C,#244a9e);color:#fff;border-radius:18px;padding:16px;margin:4px 16px 16px;
+  background:linear-gradient(135deg,#18306C,#244a9e);color:#fff;border-radius:18px;padding:16px;margin:4px 20px 16px;
   box-shadow:0 10px 24px rgba(24,48,108,.22)}
 .practicecard.done{background:linear-gradient(135deg,#274a86,#3a6ab0)}
 .pcicon{flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;color:#fff}
@@ -440,7 +445,7 @@ input.f:focus-visible,textarea.f:focus-visible,.selectpill select:focus-visible{
 .parstar.on{border-color:#f0b431;background:#fff8e8;color:#f5b301}
 
 /* ---- Quick-entry inbox ---- */
-.quickrow{display:flex;gap:10px;margin:0 16px 16px}
+.quickrow{display:flex;gap:10px;margin:0 20px 16px}
 .quickadd{flex:1 1 auto;display:flex;align-items:center;justify-content:center;gap:8px;background:#0E7C5A;border:0;color:#fff;font-weight:700;font-size:15px;font-family:Poppins,sans-serif;padding:14px;border-radius:14px;cursor:pointer;box-shadow:0 6px 16px rgba(14,124,90,.22)}
 .quickadd svg{color:#fff}
 .unsortedbtn{flex:0 0 auto;display:flex;align-items:center;gap:8px;background:#fff6e9;border:1.5px solid #f0d8a8;color:#9a6a12;font-weight:700;font-size:14px;padding:14px 16px;border-radius:14px;cursor:pointer}

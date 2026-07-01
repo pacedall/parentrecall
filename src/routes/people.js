@@ -7,7 +7,7 @@ router.use(requireAuth);
 router.use(requireVerified);
 router.use(loadHousehold);
 
-const FIELDS = ['name', 'role', 'parents', 'hooks', 'birthday'];
+const FIELDS = ['name', 'role', 'parents', 'hooks'];
 
 const HAIR_OK = ['none', 'shortFlat', 'shortCurly', 'shortWaved', 'theCaesar', 'straight01', 'straight02', 'bob', 'bun', 'longButNotTooLong', 'curly', 'curvy', 'bigHair', 'dreads', 'dreads01', 'dreads02', 'fro', 'froBand', 'frizzle', 'shaggy', 'shaggyMullet', 'shortRound', 'sides', 'frida', 'hijab', 'turban', 'hat', 'winterHat1',
   // legacy soft-cartoon values (kept so older saved avatars still validate)
@@ -65,6 +65,11 @@ function clampName(s) {
 }
 
 const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// Kept for the spreadsheet-import path, which still receives free-text birthdays
+// from uploaded files. The manual add/edit form no longer sends free text — see
+// cleanBirthdayParts below, which validates a day+month-only pair (no year)
+// entered via dropdowns rather than typed, for both data quality and privacy.
 function parseBirthday(t) {
   if (!t) return { month: null, day: null };
   const s = String(t).trim().toLowerCase();
@@ -77,6 +82,19 @@ function parseBirthday(t) {
   else if (mMD) { month = MONTHS[mMD[1].slice(0, 3)] || null; day = parseInt(mMD[2], 10); }
   if (!(month >= 1 && month <= 12) || !(day >= 1 && day <= 31)) return { month: null, day: null };
   return { month: month, day: day };
+}
+// Validate a day/month pair sent as integers from the dropdown UI. Both-or-nothing —
+// a lone day or lone month is discarded rather than half-saved, since it can't
+// produce a valid reminder date anyway.
+function cleanBirthdayParts(rawMonth, rawDay) {
+  const month = parseInt(rawMonth, 10);
+  const day = parseInt(rawDay, 10);
+  if (!(month >= 1 && month <= 12) || !(day >= 1 && day <= 31)) return { month: null, day: null };
+  return { month: month, day: day };
+}
+function formatBirthday(month, day) {
+  if (!(month >= 1 && month <= 12) || !(day >= 1 && day <= 31)) return '';
+  return day + ' ' + MONTH_NAMES[month - 1];
 }
 
 // confirm a club belongs to the caller's household
@@ -92,6 +110,7 @@ router.get('/search', async (req, res) => {
   const like = '%' + q.replace(/[%_]/g, '') + '%';
   const { rows } = await db.query(
     `SELECT p.id, p.name, p.role, p.parents, p.parents_list, p.hooks, p.avatar, p.ptype,
+            p.birthday, p.birthday_month, p.birthday_day,
             p.club_id, cl.name AS club_name, cl.color AS club_color,
             cl.child_id, ch.name AS child_name
      FROM people p
@@ -112,7 +131,7 @@ router.get('/', async (req, res) => {
   if (!clubId) return res.status(400).json({ error: 'clubId is required.' });
   if (!(await ownClub(req, clubId))) return res.status(404).json({ error: 'Club not found.' });
   const { rows } = await db.query(
-    `SELECT id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred
+    `SELECT id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, avatar, ptype, starred
      FROM people WHERE household_id = $1 AND club_id = $2
      ORDER BY starred DESC, created_at ASC, id ASC`,
     [req.householdId, clubId]
@@ -141,7 +160,7 @@ router.post('/bulk', async (req, res) => {
   });
   const { rows } = await db.query(
     'INSERT INTO people (household_id, user_id, club_id, name) VALUES ' + values.join(', ') +
-    ' RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred',
+    ' RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, avatar, ptype, starred',
     params
   );
   res.status(201).json({ added: rows.length, people: rows });
@@ -193,7 +212,7 @@ router.post('/import', async (req, res) => {
   });
   const { rows } = await db.query(
     'INSERT INTO people (household_id, user_id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, ptype) VALUES ' +
-    values.join(', ') + ' RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred',
+    values.join(', ') + ' RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, avatar, ptype, starred',
     params
   );
   res.status(201).json({ added: rows.length, people: rows });
@@ -207,8 +226,7 @@ router.post('/', async (req, res) => {
   if (!name) return res.status(400).json({ error: 'A name is needed.' });
   if (!(await ownClub(req, clubId))) return res.status(404).json({ error: 'Club not found.' });
 
-  const birthday = (req.body.birthday || '').trim();
-  const bd = parseBirthday(birthday);
+  const bd = cleanBirthdayParts(req.body.birthday_month, req.body.birthday_day);
   const pc = cleanParents(req.body.parents_list !== undefined ? req.body.parents_list : null);
   const v = {
     name,
@@ -216,13 +234,13 @@ router.post('/', async (req, res) => {
     parents: pc.list ? pc.text : (req.body.parents || '').trim(),
     parentsList: pc.list,
     hooks: (req.body.hooks || '').trim(),
-    birthday: birthday,
+    birthday: formatBirthday(bd.month, bd.day),
     avatar: sanitizeAvatar(req.body.avatar),
   };
   const { rows } = await db.query(
     `INSERT INTO people (household_id, user_id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, avatar, ptype, starred)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-     RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred`,
+     RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, avatar, ptype, starred`,
     [req.householdId, req.userId, clubId, v.name, v.role, v.parents, v.parentsList, v.hooks, v.birthday, bd.month, bd.day, v.avatar, cleanPtype(req.body.ptype), !!req.body.starred]
   );
   res.status(201).json(rows[0]);
@@ -239,10 +257,11 @@ router.put('/:id', async (req, res) => {
       vals.push(key === 'name' ? clampName(req.body[key]) : String(req.body[key]).trim());
     }
   }
-  if (req.body.birthday !== undefined) {
-    const bd = parseBirthday(String(req.body.birthday).trim());
+  if (req.body.birthday_month !== undefined || req.body.birthday_day !== undefined) {
+    const bd = cleanBirthdayParts(req.body.birthday_month, req.body.birthday_day);
     sets.push(`birthday_month = $${i++}`); vals.push(bd.month);
     sets.push(`birthday_day = $${i++}`); vals.push(bd.day);
+    sets.push(`birthday = $${i++}`); vals.push(formatBirthday(bd.month, bd.day));
   }
   if (req.body.avatar !== undefined) {
     sets.push(`avatar = $${i++}`);
@@ -262,7 +281,7 @@ router.put('/:id', async (req, res) => {
   vals.push(req.params.id, req.householdId);
   const { rows } = await db.query(
     `UPDATE people SET ${sets.join(', ')} WHERE id = $${i++} AND household_id = $${i}
-     RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, avatar, ptype, starred`,
+     RETURNING id, club_id, name, role, parents, parents_list, hooks, birthday, birthday_month, birthday_day, avatar, ptype, starred`,
     vals
   );
   if (!rows[0]) return res.status(404).json({ error: 'Not found.' });

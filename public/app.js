@@ -985,6 +985,20 @@
         return '<button type="button" class="chip' + sel + '" data-' + kind + '="' + v + '">' + labels[v] + '</button>';
       }).join('');
     }
+    var MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    function dayOptions(sel) {
+      var out = '<option value="">Day</option>';
+      for (var d = 1; d <= 31; d++) out += '<option value="' + d + '"' + (Number(sel) === d ? ' selected' : '') + '>' + d + '</option>';
+      return out;
+    }
+    function monthOptions(sel) {
+      var out = '<option value="">Month</option>';
+      MONTH_NAMES.forEach(function (name, idx) {
+        var m = idx + 1;
+        out += '<option value="' + m + '"' + (Number(sel) === m ? ' selected' : '') + '>' + name + '</option>';
+      });
+      return out;
+    }
 
     el('sheet').innerHTML =
       '<div class="grab"></div><h3>' + (edit ? 'Edit details' : 'Add someone') + '</h3>' +
@@ -1017,8 +1031,11 @@
         ['Car', 'Job', 'Where they live', 'Looks like', 'Friends with'].map(function (l) { return '<button type="button" class="chip hookchip" data-hook="' + l + '">+ ' + l + '</button>'; }).join('') +
       '</div>' +
       '<p class="hint">Tap a prompt or just type \u2014 the car, the job, where they sit, who they\u2019re friends with.</p>' +
-      '<label>Birthday <span class="opt">optional</span></label>' +
-      '<input class="f" id="f_bday" placeholder="e.g. 12 March" value="' + (p ? attr(p.birthday) : '') + '" autocomplete="off"/>' +
+      '<label>Birthday <span class="opt">optional \u00b7 day &amp; month only, no year stored</span></label>' +
+      '<div class="bdayrow">' +
+        '<div class="bdaysel"><select id="f_bday_day" aria-label="Birthday day">' + dayOptions(p ? p.birthday_day : null) + '</select><span class="av">' + ICON.down + '</span></div>' +
+        '<div class="bdaysel"><select id="f_bday_month" aria-label="Birthday month">' + monthOptions(p ? p.birthday_month : null) + '</select><span class="av">' + ICON.down + '</span></div>' +
+      '</div>' +
       '<button class="save" id="saveBtn"' + (p ? '' : ' disabled') + '>' + (edit ? 'Save' : 'Add') + '</button>' +
       (edit ? '' : '<button class="save secondary" id="saveAnotherBtn" disabled>Save &amp; add another</button>') +
       '<button class="cancel" id="cancelBtn">Cancel</button>';
@@ -1085,7 +1102,8 @@
         role: el('f_role').value.trim(),
         parents_list: parents,
         hooks: el('f_hooks').value.trim(),
-        birthday: el('f_bday').value.trim(),
+        birthday_day: el('f_bday_day').value ? parseInt(el('f_bday_day').value, 10) : null,
+        birthday_month: el('f_bday_month').value ? parseInt(el('f_bday_month').value, 10) : null,
         avatar: JSON.stringify(cfg),
         ptype: ptype
       };
